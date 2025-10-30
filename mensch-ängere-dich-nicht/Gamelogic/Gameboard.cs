@@ -18,11 +18,13 @@ public class Gameboard
 
     private void InitializePath()
     {
+        Color color = 0;
         for (int i = 0; i < Path.Length; i++)
         {
             if (i % 10 == 0)
             {
-                Path[i] = new Tile(TileType.Start);
+                Path[i] = new Tile(TileType.Start, color);
+                color++;
             }
             else
             {
@@ -38,7 +40,7 @@ public class Gameboard
             Tile[] home = new Tile[4];
             for (int i = 0; i < home.Length; i++)
             {
-                home[i] = new Tile(TileType.Home);
+                home[i] = new Tile(TileType.Home, color);
             }
             Homes.Add(color, home);
         }
@@ -51,7 +53,7 @@ public class Gameboard
             Tile[] target = new Tile[4];
             for (int i = 0; i < target.Length; i++)
             {
-                target[i] = new Tile(TileType.Target);
+                target[i] = new Tile(TileType.Target, color);
             }
             Targets.Add(color, target);
         }
