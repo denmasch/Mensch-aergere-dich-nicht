@@ -1,6 +1,6 @@
-using mensch_ängere_dich_nicht.Gamelogic;
+using MadnServer.Gamelogic;
 
-namespace mensch_ängere_dich_nicht.Player;
+namespace MadnServer.Player;
 
 /// <summary>
 /// this player tries to advance its figures and occasionally kicks out other players figures

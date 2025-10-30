@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using mensch_ängere_dich_nicht.Player;
+using MadnServer.Player;
 
-namespace mensch_ängere_dich_nicht.Gamelogic;
+namespace MadnServer.Gamelogic;
 
 public class Game
 {

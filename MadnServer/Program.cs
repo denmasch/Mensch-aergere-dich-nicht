@@ -4,7 +4,7 @@ using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Builder;
 
-namespace mensch_ängere_dich_nicht;
+namespace MadnServer;
 
 class Program
 {

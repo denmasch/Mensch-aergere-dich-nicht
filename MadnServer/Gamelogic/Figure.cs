@@ -1,6 +1,6 @@
 using System.Reflection.Emit;
 
-namespace mensch_ängere_dich_nicht.Gamelogic;
+namespace MadnServer.Gamelogic;
 
 public class Figure
 {

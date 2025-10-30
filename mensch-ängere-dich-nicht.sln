@@ -1,6 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "mensch-ängere-dich-nicht", "mensch-ängere-dich-nicht\mensch-ängere-dich-nicht.csproj", "{706F861E-5626-4D40-B6ED-785B57677134}"
+#
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MadnServer", "MadnServer\MadnServer.csproj", "{706F861E-5626-4D40-B6ED-785B57677134}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MadnShared", "MadnShared\MadnShared.csproj", "{97C396C4-791A-4A81-ABEE-421AEF8EA40A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MadnClient", "MadnClient\MadnClient.csproj", "{BB65E503-BC1A-4C5B-A8F1-03DD4AF82EAC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -12,5 +17,13 @@ Global
 		{706F861E-5626-4D40-B6ED-785B57677134}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{706F861E-5626-4D40-B6ED-785B57677134}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{706F861E-5626-4D40-B6ED-785B57677134}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97C396C4-791A-4A81-ABEE-421AEF8EA40A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97C396C4-791A-4A81-ABEE-421AEF8EA40A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97C396C4-791A-4A81-ABEE-421AEF8EA40A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97C396C4-791A-4A81-ABEE-421AEF8EA40A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BB65E503-BC1A-4C5B-A8F1-03DD4AF82EAC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BB65E503-BC1A-4C5B-A8F1-03DD4AF82EAC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BB65E503-BC1A-4C5B-A8F1-03DD4AF82EAC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BB65E503-BC1A-4C5B-A8F1-03DD4AF82EAC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
