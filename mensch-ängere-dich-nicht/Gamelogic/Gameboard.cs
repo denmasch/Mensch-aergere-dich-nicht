@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace mensch_ängere_dich_nicht.Gamelogic;
 
 public class Gameboard
@@ -60,7 +63,7 @@ public class Gameboard
     }
 
     /// <summary>
-    /// Place figures in the home area of their respective color
+    /// Place figures in the home area of their respective color 
     /// </summary>
     private void PlaceFigures()
     {

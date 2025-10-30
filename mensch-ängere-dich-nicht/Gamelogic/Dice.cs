@@ -1,3 +1,5 @@
+using System;
+
 namespace mensch_ängere_dich_nicht.Gamelogic;
 
 public static class Dice
