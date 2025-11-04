@@ -1,4 +1,5 @@
 using MadnServer.Gamelogic;
+using MadnShared.Enums;
 
 namespace MadnServer.Player;
 
