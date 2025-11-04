@@ -10,7 +10,7 @@ namespace MadnShared.Messages.ServerToClient;
 public class DiceResultMessage : GameMessage
 {
 
-    public string PlayerId { get; set; } 
+    public string PlayerId { get; set; }  = "";
     
     public int Value { get; set; }
     

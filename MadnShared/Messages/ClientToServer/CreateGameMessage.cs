@@ -10,7 +10,7 @@ namespace MadnShared.Messages.ClientToServer;
 /// </summary>
 public class CreateGameMessage : GameMessage
 {
-    public string PlayerId { get; set; } 
+    public string PlayerId { get; set; } = "";
 
     public CreateGameMessage()
     {

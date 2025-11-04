@@ -10,7 +10,7 @@ namespace MadnShared.Messages.ClientToServer;
 /// </summary>
 public class MoveFigureMessage : GameMessage
 {
-    public string PlayerId { get; set; } 
+    public string PlayerId { get; set; }  = "";
     
     public Figure Figure { get; set; }
     

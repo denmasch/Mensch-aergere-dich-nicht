@@ -7,7 +7,7 @@ namespace MadnShared.Messages.ServerToClient;
 public class NextPlayerMessage : GameMessage
 {
 
-    public string PlayerId { get; set; } 
+    public string PlayerId { get; set; }  = "";
     
     public NextPlayerMessage()
     {
