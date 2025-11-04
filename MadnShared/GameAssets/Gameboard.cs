@@ -1,8 +1,6 @@
-using System;
-using System.Collections.Generic;
 using MadnShared.Enums;
 
-namespace MadnServer.Gamelogic;
+namespace MadnShared.GameAssets;
 
 public class Gameboard
 {
@@ -68,12 +66,14 @@ public class Gameboard
     /// </summary>
     private void PlaceFigures()
     {
+        int id = 0;
         foreach (Color color in Homes.Keys)
         {
             var home = Homes[color];
             foreach (Tile tile in home)
             {
-                tile.OccupyingFigure = new Figure(color);
+                tile.OccupyingFigure = new Figure(color, id);
+                id++;
             }
         }
     }

@@ -1,19 +1,19 @@
 using System.Text.Json.Serialization;
 using MadnShared.Enums;
+using MadnShared.GameAssets;
 using MadnShared.Messages.Base;
 
 namespace MadnShared.Messages.ClientToServer;
 
 /// <summary>
-/// The player wants to roll the dice
+/// Player moves Figure by x Tiles
 /// </summary>
-public class RollDiceMessage : GameMessage
+public class CreateGameMessage : GameMessage
 {
-
     public string PlayerId { get; set; } 
 
-    public RollDiceMessage()
+    public CreateGameMessage()
     {
-        Type = MessageType.RollDice;
+        Type = MessageType.CreateGame;
     }
 }

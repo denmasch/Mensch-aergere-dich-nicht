@@ -4,10 +4,13 @@ using MadnShared.Messages.Base;
 
 namespace MadnShared.Messages.ServerToClient;
 
+/// <summary>
+/// The result of the dice roll
+/// </summary>
 public class DiceResultMessage : GameMessage
 {
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public Color Color { get; set; } 
+
+    public string PlayerId { get; set; } 
     
     public int Value { get; set; }
     

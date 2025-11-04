@@ -1,5 +1,6 @@
-namespace MadnServer.Gamelogic;
 using MadnShared.Enums;
+
+namespace MadnShared.GameAssets;
 
 public class Tile
 {

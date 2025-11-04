@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using MadnServer.Player;
+using MadnShared.GameAssets;
 
 namespace MadnServer.Gamelogic;
 
