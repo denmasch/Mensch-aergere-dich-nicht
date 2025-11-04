@@ -1,4 +1,4 @@
-namespace MadnServer.Gamelogic;
+namespace MadnShared.Enums;
 
 public enum Color
 {

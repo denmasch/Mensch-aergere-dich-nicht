@@ -1,4 +1,4 @@
-namespace MadnServer.Gamelogic;
+namespace MadnShared.GameAssets;
 
 public enum TileType
 {
