@@ -6,7 +6,7 @@ using MadnShared.Messages.Base;
 namespace MadnShared.Messages.ClientToServer;
 
 /// <summary>
-/// Player moves Figure by x Tiles
+/// Creates a new Game with the Player as Host
 /// </summary>
 public class CreateGameMessage : GameMessage
 {
