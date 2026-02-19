@@ -4,6 +4,9 @@ using MadnShared.Messages.Base;
 
 namespace MadnShared.Messages.ServerToClient;
 
+/// <summary>
+/// The next player is up
+/// </summary>
 public class NextPlayerMessage : GameMessage
 {
 
