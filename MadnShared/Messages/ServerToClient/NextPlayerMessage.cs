@@ -7,13 +7,9 @@ namespace MadnShared.Messages.ServerToClient;
 /// <summary>
 /// The next player is up
 /// </summary>
-public class NextPlayerMessage : GameMessage
+public class NextPlayerMessage : IGameMessage
 {
+    public string Type => MessageType.NextPlayer;
 
     public string PlayerId { get; set; }  = "";
-    
-    public NextPlayerMessage()
-    {
-        Type = MessageType.NextPlayer;
-    }
 }

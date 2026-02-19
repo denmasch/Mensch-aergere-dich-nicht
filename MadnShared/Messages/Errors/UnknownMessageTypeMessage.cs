@@ -2,10 +2,7 @@ using MadnShared.Messages.Base;
 
 namespace MadnShared.Messages.Errors;
 
-public class UnknownMessageTypeMessage : GameMessage
+public class UnknownMessageTypeMessage : IGameMessage
 {
-    public UnknownMessageTypeMessage()
-    {
-        Type = MessageType.UnknownMessageType;   
-    }
+    public string Type => MessageType.UnknownMessageType;
 }
