@@ -7,13 +7,9 @@ namespace MadnShared.Messages.ClientToServer;
 /// <summary>
 /// The player wants to roll the dice
 /// </summary>
-public class RollDiceMessage : GameMessage
+public class RollDiceMessage : IGameMessage
 {
+    public string Type => MessageType.RollDice;
 
     public string PlayerId { get; set; }  = "";
-
-    public RollDiceMessage()
-    {
-        Type = MessageType.RollDice;
-    }
 }
