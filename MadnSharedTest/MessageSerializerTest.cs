@@ -13,7 +13,7 @@ public sealed class MessageSerializerTest
         CreateGameMessage msg = new CreateGameMessage();
         msg.PlayerId = "1";
 
-        string expected = "{\"PlayerId\":\"1\",\"Type\":\"create_game\"}";
+        string expected = "{\"Type\":\"create_game\",\"PlayerId\":\"1\"}";
         
         string result = MessageSerializer.Serialize(msg);
         
