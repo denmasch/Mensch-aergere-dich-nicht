@@ -16,5 +16,6 @@ public class MoveFigureMessage : IGameMessage
     
     public int FigureId { get; set; }
     
-    public int Tiles { get; set; } 
+    // Number of tiles to move the figure
+    public int DiceRoll { get; set; } 
 }
