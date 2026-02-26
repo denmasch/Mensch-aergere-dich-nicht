@@ -5,4 +5,6 @@ namespace MadnShared.Messages.Errors;
 public class UnknownMessageTypeMessage : IGameMessage
 {
     public string Type => MessageType.UnknownMessageType;
+        
+    public Guid GameId { get; set; }
 }

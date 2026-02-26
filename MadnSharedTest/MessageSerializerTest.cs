@@ -10,10 +10,12 @@ public sealed class MessageSerializerTest
     [TestMethod]
     public void SerializeTest()
     {
-        CreateGameMessage msg = new CreateGameMessage();
+        Guid gameId = Guid.NewGuid();
+        StartGameMessage msg = new StartGameMessage();
         msg.PlayerId = "1";
+        msg.GameId = gameId;
 
-        string expected = "{\"Type\":\"create_game\",\"PlayerId\":\"1\"}";
+        string expected = "{\"Type\":\"start_game\",\"GameId\":\""+ gameId.ToString() +"\",\"PlayerId\":\"1\"}";
         
         string result = MessageSerializer.Serialize(msg);
         

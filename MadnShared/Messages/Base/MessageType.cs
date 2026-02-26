@@ -13,6 +13,7 @@ public static class MessageType
     public const string GameboardUpdated = "gameboard_updated";
     public const string LeaveGame = "leave_game";
     public const string GameLeft = "game_left";
+    public const string StartGame = "start_game";
     
     // Error messages
     public const string UnknownMessageType = "unknown_message_type";

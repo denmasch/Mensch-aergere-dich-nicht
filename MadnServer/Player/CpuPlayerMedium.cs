@@ -1,5 +1,7 @@
+using System.Threading.Tasks;
 using MadnServer.Gamelogic;
 using MadnShared.Enums;
+using MadnShared.Messages.Base;
 
 namespace MadnServer.Player;
 
@@ -9,4 +11,10 @@ namespace MadnServer.Player;
 public class CpuPlayerMedium : ICpuPlayer
 {
     public Color Color { get; set; }
+
+    // Stup implemntation for now
+    public Task SendAsync(IGameMessage message)
+    {
+        return Task.CompletedTask;
+    }
 }

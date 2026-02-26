@@ -173,4 +173,10 @@ public class Gameboard
             }
         }
     }
+    
+    public GameboardDTO ToDto()
+    {
+        //TODO: Implement toDto conversion
+        return null;
+    }
 }

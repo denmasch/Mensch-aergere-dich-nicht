@@ -6,6 +6,8 @@ namespace MadnShared.Messages.ServerToClient;
 public class GameboardUpdatedMessage : IGameMessage
 {
     public string Type => MessageType.GameboardUpdated;
+        
+    public Guid GameId { get; set; }
     
     public GameboardDTO Gameboard { get; set; }
 }

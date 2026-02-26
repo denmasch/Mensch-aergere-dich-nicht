@@ -11,6 +11,8 @@ namespace MadnShared.Messages.ClientToServer;
 public class MoveFigureMessage : IGameMessage
 {
     public string Type => MessageType.MoveFigure;
+        
+    public Guid GameId { get; set; }
     
     public string PlayerId { get; set; }  = "";
     
