@@ -1,11 +1,10 @@
-using System;
-
+using System.Security.Cryptography;
 namespace MadnServer.Gamelogic;
 
 public static class Dice
 {
     public static int RollDice()
     {
-        return Random.Shared.Next(1, 7);
+        return RandomNumberGenerator.GetInt32(1, 7);
     }
 }
