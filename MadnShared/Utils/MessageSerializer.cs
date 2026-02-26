@@ -44,6 +44,15 @@ public static class MessageSerializer
             case MessageType.MoveFigure:
                 message = JsonSerializer.Deserialize<MoveFigureMessage>(json);
                 break;
+            case MessageType.GameboardUpdated:
+                message = JsonSerializer.Deserialize<GameboardUpdatedMessage>(json);
+                break;
+            case MessageType.LeaveGame:
+                message = JsonSerializer.Deserialize<LeaveGameMessage>(json);
+                break;
+            case MessageType.GameLeft:
+                message = JsonSerializer.Deserialize<GameLeftMessage>(json);
+                break;
             default:
                 message = null;
                 break;
