@@ -13,8 +13,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MadnSharedTest", "MadnShare
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MadnClientTest", "MadnClientTest\MadnClientTest.csproj", "{53936872-DC8B-4B2D-B980-B34658FED6BE}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MadnDomain", "MadnDomain\MadnDomain.csproj", "{BD042B6A-6500-47DD-89EF-212921CB2401}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
