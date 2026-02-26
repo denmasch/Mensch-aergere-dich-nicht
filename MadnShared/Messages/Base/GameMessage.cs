@@ -1,6 +1,6 @@
 namespace MadnShared.Messages.Base;
 
-public abstract class GameMessage
+public interface IGameMessage
 {
-    public string Type { get; protected set; } = "";
+    public string Type { get; }
 }

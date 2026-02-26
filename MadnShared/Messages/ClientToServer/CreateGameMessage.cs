@@ -8,12 +8,8 @@ namespace MadnShared.Messages.ClientToServer;
 /// <summary>
 /// Creates a new Game with the Player as Host
 /// </summary>
-public class CreateGameMessage : GameMessage
+public class CreateGameMessage : IGameMessage
 {
+    public string Type => MessageType.CreateGame;
     public string PlayerId { get; set; } = "";
-
-    public CreateGameMessage()
-    {
-        Type = MessageType.CreateGame;
-    }
 }

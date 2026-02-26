@@ -1,4 +1,4 @@
-namespace MadnShared.GameAssets;
+namespace MadnShared.Enums;
 
 public enum TileType
 {
