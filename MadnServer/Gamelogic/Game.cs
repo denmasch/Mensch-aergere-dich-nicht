@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MadnServer.Player;
 using MadnShared.GameAssets;
 using MadnShared.Messages.Base;
 using MadnShared.Messages.ClientToServer;
 using MadnShared.Messages.ServerToClient;
+using MadnShared.Enums;
 
 namespace MadnServer.Gamelogic;
 
@@ -75,16 +77,44 @@ public class Game
         return Players[_currentPlayerIndex] == player;
     }
 
+    /// <summary>
+    /// Determine the next player and send a NextPlayerMessage to all players in the game
+    /// </summary>
     private void NextPlayer()
     {
         if (Players.Count == 0) return;
-        _currentPlayerIndex = (_currentPlayerIndex + 1) % Players.Count;
+        
         var current = Players[_currentPlayerIndex];
+        
+        var colorsCount = Enum.GetValues(typeof(Color)).Length;
+        var currentColorIndex = (int)current.Color;
+        
+        // find next player based on color order (yellow -> green -> red -> blue)
+        IPlayer next = null;
+        for (int i = 1; i <= colorsCount; i++)
+        {
+            var candidateIndex = (currentColorIndex + i) % colorsCount;
+            var candidateColor = (Color)candidateIndex;
+
+            next = Players.FirstOrDefault(p => p.Color == candidateColor);
+            if (next != null)
+                break;
+        }
+
+        if (next == null)
+        {
+            next = current;
+        }
+
+        var nextIndex = Players.IndexOf(next);
+        if (nextIndex >= 0)
+            _currentPlayerIndex = nextIndex;
 
         Broadcast(new NextPlayerMessage
         {
-            //TODO: change so that players have an id
-            //PlayerId = current.Id
+            GameId = Id,
+            NextPlayerId = next.Id,
+            NextPlayerColor = next.Color
         });
     }
 

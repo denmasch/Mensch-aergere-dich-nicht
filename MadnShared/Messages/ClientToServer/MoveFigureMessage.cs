@@ -14,7 +14,7 @@ public class MoveFigureMessage : IGameMessage
         
     public Guid GameId { get; set; }
     
-    public string PlayerId { get; set; }  = "";
+    public Guid PlayerId { get; set; }
     
     public int FigureId { get; set; }
     

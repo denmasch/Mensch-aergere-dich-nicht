@@ -13,5 +13,5 @@ public class RollDiceMessage : IGameMessage
         
     public Guid GameId { get; set; }
     
-    public string PlayerId { get; set; }  = "";
+    public Guid PlayerId { get; set; }
 }

@@ -16,6 +16,7 @@ public class RealPlayer : IPlayer
     {
         _webSocket = webSocket;
     }
+    public Guid Id { get; } = Guid.NewGuid();
     
     private WebSocket _webSocket;
     

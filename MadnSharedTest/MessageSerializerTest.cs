@@ -11,11 +11,12 @@ public sealed class MessageSerializerTest
     public void SerializeTest()
     {
         Guid gameId = Guid.NewGuid();
+        Guid playerId = Guid.NewGuid();
         StartGameMessage msg = new StartGameMessage();
-        msg.PlayerId = "1";
+        msg.PlayerId = playerId;
         msg.GameId = gameId;
 
-        string expected = "{\"Type\":\"start_game\",\"GameId\":\""+ gameId.ToString() +"\",\"PlayerId\":\"1\"}";
+        string expected = "{\"Type\":\"start_game\",\"GameId\":\""+ gameId.ToString() +"\",\"PlayerId\":\""+ playerId +"\"}";
         
         string result = MessageSerializer.Serialize(msg);
         
