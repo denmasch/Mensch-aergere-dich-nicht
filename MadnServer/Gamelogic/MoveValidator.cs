@@ -1,4 +1,6 @@
-﻿namespace MadnServer.Gamelogic;
+﻿using System.IO;
+
+namespace MadnServer.Gamelogic;
 using MadnShared.Enums;
 public class MoveValidator
 {
@@ -49,10 +51,10 @@ public class MoveValidator
             int newTile = 0;
 
             
-            // Check for end of array
+            // Check for end of array Path
             if (currentTile + diceRollCount >= gb.Path.Length - 1) // Hope this -1 correct?
             {
-                newTile = (currentTile + diceRollCount) - gb.Path.Length;
+                newTile = (currentTile + diceRollCount) - gb.Path.Length - 1;
                 bool endOfArray = true;
             }
             else
@@ -65,7 +67,12 @@ public class MoveValidator
             //Check if Target would be skipped
             for (i = currentTile; i < newTile; i++)
             {
+                // just check if fig would land on or skip Start Type Tile of the same color
+                if (gb.Path[i].Type == TileType.Start && gb.Path[i].Color == activePlayer)
+                {
+                    //TODO: Check if Home is Occupied
                     
+                }
             }
 
             isAllowed = IsTileFree(gb.Path[newTile], activePlayer);
