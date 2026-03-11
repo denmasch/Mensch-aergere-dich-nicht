@@ -20,5 +20,5 @@ public class Tile
     
     public TileType Type { get; private set; }
 
-    public Color Color { get; set; }
+    public Color Color { get; private set; }
 }
