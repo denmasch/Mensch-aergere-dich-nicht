@@ -23,12 +23,12 @@ public class Gameboard
 
 
     public static int PathLength { get; set; } = 40;
-    private int HomeLength { get; set; } = 4;
-    private int TargetLength { get; set; } = 4;
+    private static int HomeLength { get; set; } = 4;
+    private static int TargetLength { get; set; } = 4;
 
     public Tile[] Path { get; set; } = new Tile[PathLength];
-    public Dictionary<Color, Tile[]> Homes { get; set; } = new();
-    public Dictionary<Color, Tile[]> Targets { get; set; } = new();
+    public Tile[] Homes { get; set; } = Array.Empty<Tile>();
+    public Tile[] Targets { get; set; } = Array.Empty<Tile>();
     
     
     public Gameboard()
@@ -136,41 +136,36 @@ public class Gameboard
 
     private void InitializeHomes()
     {
+        int colorCount = Enum.GetValues(typeof(Color)).Length;
+        Homes = new Tile[HomeLength * colorCount];
+        int i = 0;
         foreach (Color color in Enum.GetValues(typeof(Color)))
         {
-            Tile[] home = new Tile[HomeLength];
-            for (int i = 0; i < home.Length; i++)
-            {
-                home[i] = new Tile(TileType.Home, color);
-            }
-            Homes.Add(color, home);
+            for (int j = 0; j < HomeLength; j++)
+                Homes[i++] = new Tile(TileType.Home, color);
         }
     }
 
     private void InitializeTargets()
     {
+        int colorCount = Enum.GetValues(typeof(Color)).Length;
+        Targets = new Tile[TargetLength * colorCount];
+        int i = 0;
         foreach (Color color in Enum.GetValues(typeof(Color)))
         {
-            Tile[] target = new Tile[TargetLength];
-            for (int i = 0; i < target.Length; i++)
-            {
-                target[i] = new Tile(TileType.Target, color);
-            }
-            Targets.Add(color, target);
+            for (int j = 0; j < TargetLength; j++)
+                Targets[i++] = new Tile(TileType.Target, color);
         }
     }
 
     private void PlaceFigures()
     {
         int id = 0;
-        foreach (Color color in Homes.Keys)
+        foreach (Tile tile in Homes)
         {
-            var home = Homes[color];
-            foreach (Tile tile in home)
-            {
-                tile.OccupyingFigure = new Figure(color, id);
-                id++;
-            }
+            tile.OccupyingFigure = new Figure(tile.Color, id);
+            id++;
         }
     }
+
 }

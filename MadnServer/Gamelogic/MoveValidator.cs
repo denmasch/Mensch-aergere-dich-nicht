@@ -70,7 +70,7 @@ public class MoveValidator
                 // just check if fig would land on or skip Start Type Tile of the same color
                 if (gb.Path[i].Type == TileType.Start && gb.Path[i].Color == activePlayer)
                 {
-                    //TODO: Check if Home is Occupied
+                    //TODO: Check if Target is Occupied
                     
                 }
             }
