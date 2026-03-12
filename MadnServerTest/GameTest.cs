@@ -136,4 +136,30 @@ public sealed class GameTest
         var msg = p1.SentMessages.OfType<UnknownMessageTypeMessage>().Last();
         Assert.AreEqual(game.Id, msg.GameId);
     }
+
+    [TestMethod]
+    public void AddPlayer_AssignsNextFreeColor_AndRejectsWhenGameIsFull()
+    {
+        var p1 = new MockPlayer();
+        var p2 = new MockPlayer();
+        var game = new Game(new List<IPlayer> { p1, p2 });
+
+        // player 3 and 4 can join 
+        var p3 = new MockPlayer();
+        var p4 = new MockPlayer();
+
+        var added3 = game.AddPlayer(p3);
+        var added4 = game.AddPlayer(p4);
+
+        Assert.IsTrue(added3);
+        Assert.IsTrue(added4);
+        Assert.AreEqual(4, game.Players.Count);
+
+        // player 5 is rejected because the game is full
+        var p5 = new MockPlayer();
+        var added5 = game.AddPlayer(p5);
+
+        Assert.IsFalse(added5);
+        Assert.AreEqual(4, game.Players.Count);
+    }
 }

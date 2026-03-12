@@ -20,18 +20,33 @@ public class Game
     private bool _gameStarted = false;
     private int _currentPlayerIndex = 0;
 
+    private const int MaxPlayers = 4;
+
     public Game(List<IPlayer> players)
     {
         Players = players;
         Gameboard = new Gameboard();
     }
     
-    public void AddPlayer(IPlayer player)
+    public bool AddPlayer(IPlayer player)
     {
+        // if game already started or max players reached, reject join
+        if (_gameStarted || Players.Count >= MaxPlayers)
+        {
+            return false;
+        }
+        var allColors = Enum.GetValues(typeof(Color)).Cast<Color>().ToList();
+
+        var usedColors = Players.Select(p => p.Color);
+
+        var freeColor = allColors.FirstOrDefault(c => !usedColors.Contains(c));
+        
+        player.Color = freeColor;
         Players.Add(player);
+        return true;
     }
 
-    public void StartGame()
+    private void StartGame()
     {
         if (_gameStarted || Players.Count == 0)
             return;
