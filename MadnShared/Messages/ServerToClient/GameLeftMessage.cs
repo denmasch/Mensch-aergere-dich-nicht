@@ -5,4 +5,8 @@ namespace MadnShared.Messages.ServerToClient;
 public class GameLeftMessage : IGameMessage
 {
     public string Type => MessageType.GameLeft;
+        
+    public Guid GameId { get; set; }
+    
+    public Guid PlayerId { get; set; }
 }

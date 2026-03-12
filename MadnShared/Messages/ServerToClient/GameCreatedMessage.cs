@@ -8,8 +8,8 @@ namespace MadnShared.Messages.ServerToClient;
 public class GameCreatedMessage : IGameMessage
 {
     public string Type => MessageType.GameCreated;
+        
+    public Guid GameId { get; set; }
     
-    public string GameId { get; set; }  = "";
-    
-    public string PlayerId { get; set; } = "";
+    public Guid PlayerId { get; set; }
 }

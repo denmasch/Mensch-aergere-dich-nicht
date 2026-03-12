@@ -9,7 +9,7 @@ public class LeaveGameMessage : IGameMessage
 {
     public string Type => MessageType.LeaveGame;
     
-    public string GameId { get; set; } = "";
+    public Guid GameId { get; set; }
 
-    public string PlayerId { get; set; } = "";
+    public Guid PlayerId { get; set; }
 }

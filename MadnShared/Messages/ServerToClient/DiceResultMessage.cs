@@ -10,8 +10,10 @@ namespace MadnShared.Messages.ServerToClient;
 public class DiceResultMessage : IGameMessage
 {
     public string Type => MessageType.DiceResult;
-
-    public string PlayerId { get; set; }  = "";
+    
+    public Guid PlayerId { get; set; }
+        
+    public Guid GameId { get; set; }
     
     public int Value { get; set; }
 }

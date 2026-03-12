@@ -3,6 +3,10 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
 using Microsoft.AspNetCore.Builder;
+using MadnServer.Gamelogic;
+using MadnServer.Player;
+using MadnShared.Messages.Base;
+using MadnShared.Utils;
 
 namespace MadnServer;
 
@@ -21,9 +25,11 @@ class Program
             {
                 using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
                 Console.WriteLine("Client verbunden!");
+                
+                IPlayer player = new RealPlayer(webSocket);
 
                 var buffer = new byte[1024 * 4];
-                while (true)
+                while (webSocket.State == WebSocketState.Open)
                 {
                     var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                     if (result.MessageType == WebSocketMessageType.Close)
@@ -32,11 +38,17 @@ class Program
                         break;
                     }
 
-                    var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    Console.WriteLine($"Nachricht vom Client: {msg}");
-
-                    var response = Encoding.UTF8.GetBytes($"Server: {msg}");
-                    await webSocket.SendAsync(new ArraySegment<byte>(response), WebSocketMessageType.Text, true, CancellationToken.None);
+                    var msgJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                    var gameMsg = MessageSerializer.Deserialize(msgJson);
+                    if (gameMsg is null)
+                        continue;
+                    
+                    Guid gameId = gameMsg.GameId;
+                    var game = GameManager.GetGame(gameId);
+                    if (game != null)
+                    {
+                        game.HandleMessage(player, gameMsg);
+                    }
                 }
             }
             else
