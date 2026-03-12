@@ -7,6 +7,7 @@ using MadnShared.Messages.Base;
 using MadnShared.Messages.ClientToServer;
 using MadnShared.Messages.ServerToClient;
 using MadnShared.Enums;
+using MadnShared.Messages.Errors;
 
 namespace MadnServer.Gamelogic;
 
@@ -39,7 +40,13 @@ public class Game
         _gameStarted = true;
         _currentPlayerIndex = 0;
 
-        //TODO: start the game
+        // First turn
+        Broadcast(new NextPlayerMessage
+        {
+            GameId = Id,
+            NextPlayerId = Players[_currentPlayerIndex].Id,
+            NextPlayerColor = Players[_currentPlayerIndex].Color
+        });
     }
 
     /// <summary>
@@ -52,7 +59,7 @@ public class Game
         switch (message)
         {
             case StartGameMessage:
-                // Player 1 is admin of the goup and can start the game, but only if there is at least 1 player in the game (himself)
+                // Player 1 is admin of the group and can start the game, but only if there is at least 1 player in the game
                 if (!_gameStarted && Players.Count > 0 && Players[0] == fromPlayer)
                 {
                     StartGame();
@@ -67,7 +74,12 @@ public class Game
             case LeaveGameMessage leave:
                 HandleLeaveGame(fromPlayer, leave);
                 break;
-            // TODO: handle more message types
+            default:
+                Broadcast(new UnknownMessageTypeMessage
+                {
+                    GameId = Id
+                });
+                break;
         }
     }
 
@@ -159,11 +171,11 @@ public class Game
             GameManager.RemoveGame(Id);
         }
 
-        // Broadcast(new GameLeftMessage
-        // {
-        //     GameId = Id,
-        //     PlayerColor = fromPlayer.Color
-        // });
+        Broadcast(new GameLeftMessage
+        {
+            GameId = Id,
+            PlayerId = fromPlayer.Id
+        });
     }
 
     /// <summary>
