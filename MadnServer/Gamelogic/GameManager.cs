@@ -14,9 +14,8 @@ public static class GameManager
 
     public static Game CreateGame()
     {
-        var gameId = Guid.NewGuid();
-        var game = new Game(gameId, new List<IPlayer>());
-        _games[gameId] = game;
+        var game = new Game(new List<IPlayer>());
+        _games[game.Id] = game;
         return game;
     }
 

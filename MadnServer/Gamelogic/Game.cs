@@ -13,16 +13,15 @@ namespace MadnServer.Gamelogic;
 
 public class Game
 {
-    public Guid Id { get; }
+    public Guid Id { get; } = new Guid();
     public Gameboard Gameboard { get; set; }
     public List<IPlayer> Players { get; private set; }
 
     private bool _gameStarted = false;
     private int _currentPlayerIndex = 0;
 
-    public Game(Guid id, List<IPlayer> players)
+    public Game(List<IPlayer> players)
     {
-        Id = id;
         Players = players;
         Gameboard = new Gameboard();
     }
