@@ -22,9 +22,9 @@ public class Gameboard
     private readonly Dictionary<(int, int), int> _pathCoords = new();
 
 
-    private static int PathLength { get; set; } = 40;
-    private static int HomeLength { get; set; } = 4;
-    private static int TargetLength { get; set; } = 4;
+    public static int PathLength { get; set; } = 40;
+    private int HomeLength { get; set; } = 4;
+    private int TargetLength { get; set; } = 4;
 
     public Tile[] Path { get; set; } = new Tile[PathLength];
     public Dictionary<Color, Tile[]> Homes { get; set; } = new();
@@ -143,9 +143,11 @@ public class Gameboard
             {
                 home[i] = new Tile(TileType.Home, color);
             }
+
             Homes.Add(color, home);
         }
     }
+
 
     private void InitializeTargets()
     {

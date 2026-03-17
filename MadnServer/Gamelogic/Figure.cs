@@ -8,9 +8,12 @@ public class Figure
     {
         Color = color;
         Id = id;
+        IsHome = true;
     }
     
     public Color Color { get; private set; }
     
     public int Id { get; private set; }
+    
+    public bool IsHome { get; private set; }
 }
