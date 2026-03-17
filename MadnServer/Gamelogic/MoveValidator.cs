@@ -1,13 +1,15 @@
-﻿using System.IO;
-
-namespace MadnServer.Gamelogic;
+﻿namespace MadnServer.Gamelogic;
 using MadnShared.Enums;
+
 public class MoveValidator
 {
     public bool ValidateMove(Gameboard gb, Figure fig, Color activePlayer, int diceRollCount )
     {
-        bool isAllowed = false;
-        
+        if (fig.Color != activePlayer || diceRollCount <= 0)
+        {
+            return false;
+        }
+
         //TODO: Test if Movement is allowed
         
         /* Allowed Movement:
@@ -16,94 +18,188 @@ public class MoveValidator
             - Path
             - own-color Targets 
                 - if diceRollCount does not exceed Targets
+        - Figure moves within Target Tiles to empty Tile of Target of its own color
         - Figure captures enemy Figure
         - Figures gets out of Home Tiles to Path by rolling 6
             - only if Path Tile
                 - is empty
                 - is enemy figures -> gets captured
         */
-        int pathLength = Gameboard.PathLength;
-        // Get to Figure out of Home to Start by rolling 6 
-        if (fig.IsHome == true)
+        
+        // Check Movement out of Home 
+        if (fig.IsHome)
         {
-            if (diceRollCount == 6)
-            {
-                for (int i = 0; i > pathLength; i++)
-                {
-                    if (gb.Path[i].Color == activePlayer && gb.Path[i].Type == TileType.Start)
-                    {
-                        return IsTileFree(gb.Path[i], activePlayer);
-                    }
-                }
-            }
+            return ValidateHomeExit(gb, activePlayer, diceRollCount);
         }
-        else
+        // Check Movement within Target
+        if (TryFindCurrentTargetIndex(gb, fig, activePlayer, out int currentTargetIndex))
         {
-            //Check on which Tile is currently occupied by fig
-            int i = 0;
-            while (gb.Path[i].OccupyingFigure != fig)
-            {
-                i++;
-            }
-
-            
-            int currentTile = i;
-            int newTile = 0;
-
-            
-            // Check for end of array Path
-            if (currentTile + diceRollCount >= gb.Path.Length - 1) // Hope this -1 correct?
-            {
-                newTile = (currentTile + diceRollCount) - gb.Path.Length - 1;
-                bool endOfArray = true;
-            }
-            else
-            {
-                newTile = (currentTile + diceRollCount);
-                bool endOfArray = false;
-            }
-            
-            // TODO: check if Fig can go to Target or not
-            //Check if Target would be skipped
-            for (i = currentTile; i < newTile; i++)
-            {
-                // just check if fig would land on or skip Start Type Tile of the same color
-                if (gb.Path[i].Type == TileType.Start && gb.Path[i].Color == activePlayer)
-                {
-                    //TODO: Check if Target is Occupied
-                    
-                }
-            }
-
-            isAllowed = IsTileFree(gb.Path[newTile], activePlayer);
-
+            return ValidateTargetMove(gb, activePlayer, currentTargetIndex, diceRollCount);
         }
-
-        return isAllowed;
+        // Is Figure on Board? 
+        if (!TryFindCurrentPathIndex(gb, fig, out int currentTile))
+        {
+            return false;
+        }
+        // Is Valid Start on Board?
+        if (!TryFindPlayerStartIndex(gb, activePlayer, out int playerStartIndex))
+        {
+            return false;
+        }
+        // Check Movement for entering Target
+        if (TryValidateTargetEntry(gb, activePlayer, currentTile, playerStartIndex, diceRollCount, out bool targetMoveAllowed))
+        {
+            return targetMoveAllowed;
+        }
+        // Check Movement within Path 
+        return ValidatePathMove(gb, currentTile, activePlayer, diceRollCount);
     }
-    
 
-    private bool IsTileFree(Tile tile,  Color activePlayer)
+    private bool ValidateHomeExit(Gameboard gb, Color activePlayer, int diceRollCount)
     {
-        if (tile.IsOccupied == true)
+        if (diceRollCount != 6)
         {
-            // Is Figure of Same color on Tile?
-            if (tile.OccupyingFigure.Color == activePlayer)
+            return false;
+        }
+
+        for (int i = 0; i < Gameboard.PathLength; i++)
+        {
+            if (gb.Path[i].Color == activePlayer && gb.Path[i].Type == TileType.Start)
             {
-                return false;
+                return IsTileFree(gb.Path[i], activePlayer);
             }
-            else
+        }
+
+        return false;
+    }
+
+    private bool TryFindCurrentPathIndex(Gameboard gb, Figure fig, out int currentTile)
+    {
+        return TryFindFigureOnTiles(gb.Path, fig, out currentTile);
+    }
+
+    private bool TryFindCurrentTargetIndex(Gameboard gb, Figure fig, Color activePlayer, out int currentTargetIndex)
+    {
+        if (!TryGetPlayerTargets(gb, activePlayer, out Tile[] playerTargets))
+        {
+            currentTargetIndex = -1;
+            return false;
+        }
+
+        return TryFindFigureOnTiles(playerTargets, fig, out currentTargetIndex);
+    }
+
+    private bool TryFindPlayerStartIndex(Gameboard gb, Color activePlayer, out int playerStartIndex)
+    {
+        for (int i = 0; i < gb.Path.Length; i++)
+        {
+            if (gb.Path[i].Type == TileType.Start && gb.Path[i].Color == activePlayer)
             {
-                // Figure can capture
+                playerStartIndex = i;
                 return true;
             }
         }
-        return true;
 
+        playerStartIndex = -1;
+        return false;
     }
 
-    private bool IsAllowedToTarget()
+    private bool TryValidateTargetEntry(Gameboard gb, Color activePlayer, int currentTile, int playerStartIndex, int diceRollCount, out bool isAllowed)
     {
+        int stepsToStart = GetStepsToStart(currentTile, playerStartIndex, gb.Path.Length);
+        if (diceRollCount <= stepsToStart)
+        {
+            isAllowed = false;
+            return false;
+        }
+
+        if (!TryGetPlayerTargets(gb, activePlayer, out Tile[] playerTargets))
+        {
+            isAllowed = false;
+            return true;
+        }
+
+        int targetIndex = diceRollCount - stepsToStart - 1;
+        if (targetIndex < 0 || targetIndex >= playerTargets.Length)
+        {
+            isAllowed = false;
+            return true;
+        }
+
+        isAllowed = AreTargetTilesFree(playerTargets, -1, targetIndex);
         return true;
+    }
+
+    private bool ValidateTargetMove(Gameboard gb, Color activePlayer, int currentTargetIndex, int diceRollCount)
+    {
+        if (!TryGetPlayerTargets(gb, activePlayer, out Tile[] playerTargets))
+        {
+            return false;
+        }
+
+        int newTargetIndex = currentTargetIndex + diceRollCount;
+        if (newTargetIndex >= playerTargets.Length)
+        {
+            return false;
+        }
+
+        return AreTargetTilesFree(playerTargets, currentTargetIndex, newTargetIndex);
+    }
+
+    private int GetStepsToStart(int currentTile, int playerStartIndex, int pathLength)
+    {
+        int stepsToStart = (playerStartIndex - currentTile + pathLength) % pathLength;
+        return stepsToStart == 0 ? pathLength : stepsToStart;
+    }
+
+    private bool TryGetPlayerTargets(Gameboard gb, Color activePlayer, out Tile[] playerTargets)
+    {
+        if (gb.Targets.ContainsKey(activePlayer))
+        {
+            playerTargets = gb.Targets[activePlayer];
+            return true;
+        }
+
+        playerTargets = [];
+        return false;
+    }
+
+    private bool TryFindFigureOnTiles(Tile[] tiles, Figure fig, out int tileIndex)
+    {
+        for (int i = 0; i < tiles.Length; i++)
+        {
+            if (tiles[i].OccupyingFigure == fig)
+            {
+                tileIndex = i;
+                return true;
+            }
+        }
+
+        tileIndex = -1;
+        return false;
+    }
+
+    private bool AreTargetTilesFree(Tile[] playerTargets, int startExclusive, int endInclusive)
+    {
+        for (int i = startExclusive + 1; i <= endInclusive; i++)
+        {
+            if (playerTargets[i].IsOccupied)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private bool ValidatePathMove(Gameboard gb, int currentTile, Color activePlayer, int diceRollCount)
+    {
+        int newTile = (currentTile + diceRollCount) % gb.Path.Length;
+        return IsTileFree(gb.Path[newTile], activePlayer);
+    }
+
+    private bool IsTileFree(Tile tile,  Color activePlayer)
+    {
+        return !tile.IsOccupied || tile.OccupyingFigure?.Color != activePlayer;
     }
 }
