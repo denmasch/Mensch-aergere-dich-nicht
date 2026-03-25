@@ -1,9 +1,9 @@
 ﻿namespace MadnServer.Gamelogic;
 using MadnShared.Enums;
 
-public class MoveValidator
+public static class MoveValidator
 {
-    public bool ValidateMove(Gameboard gb, Figure fig, Color activePlayer, int diceRollCount )
+    public static bool ValidateMove(Gameboard gb, Figure fig, Color activePlayer, int diceRollCount )
     {
         if (fig.Color != activePlayer || diceRollCount <= 0)
         {
@@ -55,7 +55,7 @@ public class MoveValidator
         return ValidatePathMove(gb, currentTile, activePlayer, diceRollCount);
     }
 
-    private bool ValidateHomeExit(Gameboard gb, Color activePlayer, int diceRollCount)
+    private static bool ValidateHomeExit(Gameboard gb, Color activePlayer, int diceRollCount)
     {
         if (diceRollCount != 6)
         {
@@ -73,12 +73,12 @@ public class MoveValidator
         return false;
     }
 
-    private bool TryFindCurrentPathIndex(Gameboard gb, Figure fig, out int currentTile)
+    private static bool TryFindCurrentPathIndex(Gameboard gb, Figure fig, out int currentTile)
     {
         return TryFindFigureOnTiles(gb.Path, fig, out currentTile);
     }
 
-    private bool TryFindCurrentTargetIndex(Gameboard gb, Figure fig, Color activePlayer, out int currentTargetIndex)
+    private static bool TryFindCurrentTargetIndex(Gameboard gb, Figure fig, Color activePlayer, out int currentTargetIndex)
     {
         if (!TryGetPlayerTargets(gb, activePlayer, out Tile[] playerTargets))
         {
@@ -89,7 +89,7 @@ public class MoveValidator
         return TryFindFigureOnTiles(playerTargets, fig, out currentTargetIndex);
     }
 
-    private bool TryFindPlayerStartIndex(Gameboard gb, Color activePlayer, out int playerStartIndex)
+    private static bool TryFindPlayerStartIndex(Gameboard gb, Color activePlayer, out int playerStartIndex)
     {
         for (int i = 0; i < gb.Path.Length; i++)
         {
@@ -104,7 +104,7 @@ public class MoveValidator
         return false;
     }
 
-    private bool TryValidateTargetEntry(Gameboard gb, Color activePlayer, int currentTile, int playerStartIndex, int diceRollCount, out bool isAllowed)
+    private static bool TryValidateTargetEntry(Gameboard gb, Color activePlayer, int currentTile, int playerStartIndex, int diceRollCount, out bool isAllowed)
     {
         int stepsToStart = GetStepsToStart(currentTile, playerStartIndex, gb.Path.Length);
         if (diceRollCount <= stepsToStart)
@@ -130,7 +130,7 @@ public class MoveValidator
         return true;
     }
 
-    private bool ValidateTargetMove(Gameboard gb, Color activePlayer, int currentTargetIndex, int diceRollCount)
+    private static bool ValidateTargetMove(Gameboard gb, Color activePlayer, int currentTargetIndex, int diceRollCount)
     {
         if (!TryGetPlayerTargets(gb, activePlayer, out Tile[] playerTargets))
         {
@@ -146,13 +146,13 @@ public class MoveValidator
         return AreTargetTilesFree(playerTargets, currentTargetIndex, newTargetIndex);
     }
 
-    private int GetStepsToStart(int currentTile, int playerStartIndex, int pathLength)
+    private static int GetStepsToStart(int currentTile, int playerStartIndex, int pathLength)
     {
         int stepsToStart = (playerStartIndex - currentTile + pathLength) % pathLength;
         return stepsToStart == 0 ? pathLength : stepsToStart;
     }
 
-    private bool TryGetPlayerTargets(Gameboard gb, Color activePlayer, out Tile[] playerTargets)
+    private static bool TryGetPlayerTargets(Gameboard gb, Color activePlayer, out Tile[] playerTargets)
     {
         if (gb.Targets.ContainsKey(activePlayer))
         {
@@ -164,7 +164,7 @@ public class MoveValidator
         return false;
     }
 
-    private bool TryFindFigureOnTiles(Tile[] tiles, Figure fig, out int tileIndex)
+    private static bool TryFindFigureOnTiles(Tile[] tiles, Figure fig, out int tileIndex)
     {
         for (int i = 0; i < tiles.Length; i++)
         {
@@ -179,7 +179,7 @@ public class MoveValidator
         return false;
     }
 
-    private bool AreTargetTilesFree(Tile[] playerTargets, int startExclusive, int endInclusive)
+    private static bool AreTargetTilesFree(Tile[] playerTargets, int startExclusive, int endInclusive)
     {
         for (int i = startExclusive + 1; i <= endInclusive; i++)
         {
@@ -192,13 +192,13 @@ public class MoveValidator
         return true;
     }
 
-    private bool ValidatePathMove(Gameboard gb, int currentTile, Color activePlayer, int diceRollCount)
+    private static bool ValidatePathMove(Gameboard gb, int currentTile, Color activePlayer, int diceRollCount)
     {
         int newTile = (currentTile + diceRollCount) % gb.Path.Length;
         return IsTileFree(gb.Path[newTile], activePlayer);
     }
 
-    private bool IsTileFree(Tile tile,  Color activePlayer)
+    private static bool IsTileFree(Tile tile,  Color activePlayer)
     {
         return !tile.IsOccupied || tile.OccupyingFigure?.Color != activePlayer;
     }
