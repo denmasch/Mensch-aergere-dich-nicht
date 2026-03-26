@@ -108,6 +108,7 @@ public class Game
     /// </summary>
     private void NextPlayer()
     {
+        //TODO: What if the current player rolled a 6
         if (Players.Count == 0) return;
         
         var current = Players[_currentPlayerIndex];
@@ -151,12 +152,13 @@ public class Game
 
         var diceValue = Dice.RollDice();
 
-        //TODO: what if player has no valid move? -> inform player and skip to next player
+        var validMoves = Gameboard.GetValidMoves(fromPlayer.Color, diceValue);
         
         fromPlayer.SendAsync(new DiceResultMessage
         {
             GameId = Id,
-            Value = diceValue
+            Value = diceValue,
+            ValidMoves = validMoves
         });
     }
 
@@ -165,7 +167,12 @@ public class Game
         if (!IsCurrentPlayer(fromPlayer))
             return;
 
-        // TODO: Move figure and validate move (update Gameboard)
+        var figId = msg.FigureId;
+        var col = fromPlayer.Color;
+
+        var fig = Gameboard.GetFigure(figId, col);
+        Gameboard.MoveFigure(fig, col, msg.DiceRoll);
+        
         Broadcast(new GameboardUpdatedMessage
         {
             GameId = Id,

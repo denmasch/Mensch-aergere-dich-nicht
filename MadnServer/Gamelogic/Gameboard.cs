@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using MadnShared.Enums;
 using MadnShared.GameAssets;
 using System.Text;
@@ -180,5 +181,202 @@ public class Gameboard
     {
         //TODO: Implement toDto conversion
         return null;
+    }
+
+    public Figure GetFigure(int id, Color color)
+    {
+        var figures = GetAllFigures(color);
+        return figures.First(f => f.Id == id);
+    }
+    
+    public bool MoveFigure(Figure fig, Color activePlayer, int diceRollCount )
+    {
+        bool movementAllowed = MoveValidator.ValidateMove(this, fig, activePlayer, diceRollCount);
+        if (!movementAllowed)
+        {
+            return false;
+        }
+
+        // Case 1: Figure is in Home (dice roll is 6)
+        var currentHomeTile = FindHomeTile(fig);
+        if (currentHomeTile != null && diceRollCount == 6)
+        {
+            // Move from Home to Start
+            currentHomeTile.OccupyingFigure = null;
+            var startIndex = GetStartIndexForColor(fig.Color);
+            var destTile = Path[startIndex];
+
+            if (destTile.IsOccupied)
+            {
+                KickFigure(destTile.OccupyingFigure);
+            }
+
+            destTile.OccupyingFigure = fig;
+            return true;
+        }
+
+        // Case 2: Figure is on the Path or in the Target
+        var currentPathIndex = FindPathIndex(fig);
+        var currentTargetIndex = FindTargetIndex(fig);
+
+        if (currentPathIndex >= 0)
+        {
+            // Figure is on the path
+            var startIndex = GetStartIndexForColor(fig.Color);
+
+            // Distanz von Start entlang des Rings zur aktuellen Position
+            int distanceFromStart = (currentPathIndex - startIndex + PathLength) % PathLength;
+            int totalDistanceAfterMove = distanceFromStart + diceRollCount;
+
+            // check if the figure has moved a full lap
+            if (totalDistanceAfterMove <= PathLength - 1)
+            {
+                // move within path
+                int newIndex = (currentPathIndex + diceRollCount) % PathLength;
+
+                var destTile = Path[newIndex];
+                if (destTile.IsOccupied)
+                {
+                    KickFigure(destTile.OccupyingFigure);
+                }
+
+                Path[currentPathIndex].OccupyingFigure = null;
+                destTile.OccupyingFigure = fig;
+                return true;
+            }
+            else
+            {
+                // move into target
+                int stepsIntoTarget = totalDistanceAfterMove - (PathLength - 1);
+                int targetIndex = stepsIntoTarget - 1; // 0-based
+                
+                var targetTiles = Targets[fig.Color];
+                var destTargetTile = targetTiles[targetIndex];
+
+                Path[currentPathIndex].OccupyingFigure = null;
+                destTargetTile.OccupyingFigure = fig;
+                return true;
+            }
+        }
+        else if (currentTargetIndex >= 0)
+        {
+            // move within target
+            int newTargetIndex = currentTargetIndex + diceRollCount;
+            var targetTiles = Targets[fig.Color];
+            var destTargetTile = targetTiles[newTargetIndex];
+            
+            targetTiles[currentTargetIndex].OccupyingFigure = null;
+            destTargetTile.OccupyingFigure = fig;
+            
+            return true;
+        }
+
+        // could not find figure
+        return false;
+    }
+
+
+    private int GetStartIndexForColor(Color color)
+    {
+        return ((int)color * _armLength) % PathLength;
+    }
+
+    private Tile? FindHomeTile(Figure fig)
+    {
+        if (!Homes.TryGetValue(fig.Color, out var homeArr))
+            return null;
+
+        return homeArr.FirstOrDefault(t => t.OccupyingFigure == fig);
+    }
+
+    private int FindPathIndex(Figure fig)
+    {
+        return Array.FindIndex(Path, t => t.OccupyingFigure == fig);
+    }
+
+    private int FindTargetIndex(Figure fig)
+    {
+        if (!Targets.TryGetValue(fig.Color, out var targetArr))
+            return -1;
+
+        return Array.FindIndex(targetArr, t => t.OccupyingFigure == fig);
+    }
+    
+    /// <summary>
+    /// Gets all valid moves for a player based on the current gameboard state and a dice roll.
+    /// </summary>
+    /// <param name="color">The players color</param>
+    /// <param name="diceRollCount">Dice roll</param>
+    /// <returns>A list of all valid Moves</returns>
+    public List<Move> GetValidMoves(Color color, int diceRollCount)
+    {
+        var result = new List<Move>();
+        var figures = GetAllFigures(color);
+        
+        foreach (var f in figures)
+        {
+            if (MoveValidator.ValidateMove(this, f, color, diceRollCount))
+            {
+                result.Add(new Move
+                {
+                    FigureIndex = f.Id,
+                    Steps = diceRollCount
+                });
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Gets all figures of a player across Homes, Targets and Path.
+    /// </summary>
+    /// <param name="color"></param>
+    /// <returns></returns>
+    private List<Figure> GetAllFigures(Color color)
+    {
+        var figures = new List<Figure>();
+
+        if (Homes.TryGetValue(color, out var homeArr))
+            figures.AddRange(homeArr
+                .Where(t => t.OccupyingFigure != null)
+                .Select(t => t.OccupyingFigure!));
+
+        if (Targets.TryGetValue(color, out var targetArr))
+            figures.AddRange(targetArr
+                .Where(t => t.OccupyingFigure != null)
+                .Select(t => t.OccupyingFigure!));
+
+        figures.AddRange(Path
+            .Where(t => t.OccupyingFigure != null && t.OccupyingFigure.Color == color)
+            .Select(t => t.OccupyingFigure!));
+        
+        return figures;
+    }
+    
+    private void KickFigure(Figure fig)
+    {
+        // Remove figure from current tile
+        var tile = GetPathTileForFigure(fig);
+        if (tile != null)
+        {
+            tile.OccupyingFigure = null;
+        }
+        
+        // Move figure back to home
+        var home = Homes[fig.Color];
+        foreach (var t in home)
+        {
+            if (t.OccupyingFigure == null)
+            {
+                t.OccupyingFigure = fig;
+                break;
+            }
+        }
+    }
+
+    private Tile GetPathTileForFigure(Figure fig)
+    {
+        return Path.First(t => t.OccupyingFigure == fig);
     }
 }
