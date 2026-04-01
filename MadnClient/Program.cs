@@ -1,4 +1,5 @@
 ﻿using MadnShared.GameAssets;
+using MadnShared.Logger;
 
 namespace MadnClient;
 
@@ -6,6 +7,7 @@ public class Program
 {
     public static void Main(string[] args)
     {
-        Console.WriteLine("Hello, MadnClient!");
+        Logger.AddWriter(new FileWriter("log.txt"));
+        Logger.LogInfo("Starting Client");
     }
 }
