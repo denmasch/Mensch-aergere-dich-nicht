@@ -7,6 +7,7 @@ using MadnShared.Messages.Base;
 using MadnShared.Messages.ClientToServer;
 using MadnShared.Messages.ServerToClient;
 using MadnShared.Enums;
+using MadnShared.Logger;
 using MadnShared.Messages.Errors;
 
 namespace MadnServer.Gamelogic;
@@ -33,6 +34,7 @@ public class Game
         // if game already started or max players reached, reject join
         if (_gameStarted || Players.Count >= MaxPlayers)
         {
+            Logger.LogInfo($"Game {Id} is already started or is full. Player cannot join.");
             return false;
         }
         var allColors = Enum.GetValues(typeof(Color)).Cast<Color>().ToList();
@@ -43,6 +45,7 @@ public class Game
         
         player.Color = freeColor;
         Players.Add(player);
+        Logger.LogInfo($"{player.Color} player joined game {Id}.");
         return true;
     }
 
@@ -61,6 +64,7 @@ public class Game
             NextPlayerId = Players[_currentPlayerIndex].Id,
             NextPlayerColor = Players[_currentPlayerIndex].Color
         });
+        Logger.LogInfo($"Game {Id} started with {Players.Count} players.");
     }
 
     /// <summary>
@@ -73,6 +77,7 @@ public class Game
         switch (message)
         {
             case StartGameMessage:
+                Logger.LogInfo($"Player {fromPlayer.Id} requested to start game {Id}.");
                 // Player 1 is admin of the group and can start the game, but only if there is at least 1 player in the game
                 if (!_gameStarted && Players.Count > 0 && Players[0] == fromPlayer)
                 {
@@ -80,15 +85,19 @@ public class Game
                 }
                 break;
             case RollDiceMessage rollDice:
+                Logger.LogInfo($"Player {fromPlayer.Id} requested to roll dice in game {Id}.");
                 HandleRollDice(fromPlayer, rollDice);
                 break;
             case MoveFigureMessage moveFigure:
+                Logger.LogInfo($"Player {fromPlayer.Id} requested to move figure in game {Id}.");
                 HandleMoveFigure(fromPlayer, moveFigure);
                 break;
             case LeaveGameMessage leave:
+                Logger.LogInfo($"Player {fromPlayer.Id} requested to leave game {Id}.");
                 HandleLeaveGame(fromPlayer, leave);
                 break;
             default:
+                Logger.LogError($"Unhandled message type {message.GetType().Name}");
                 Broadcast(new UnknownMessageTypeMessage
                 {
                     GameId = Id
@@ -197,6 +206,7 @@ public class Game
             GameId = Id,
             PlayerId = fromPlayer.Id
         });
+        Logger.LogInfo($"Player {fromPlayer.Id} left. {Players.Count} players remaining.");
     }
 
     /// <summary>

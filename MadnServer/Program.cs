@@ -5,6 +5,7 @@ using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using MadnServer.Gamelogic;
 using MadnServer.Player;
+using MadnShared.Logger;
 using MadnShared.Messages.Base;
 using MadnShared.Utils;
 
@@ -14,9 +15,12 @@ class Program
 {
     static void Main(string[] args)
     {
+        Logger.AddWriter(new ConsoleWriter());
+        Logger.AddWriter(new FileWriter("logs/log.txt"));
+        
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
-
+        
         app.UseWebSockets();
 
         app.Map("/ws", async context =>
@@ -24,7 +28,7 @@ class Program
             if (context.WebSockets.IsWebSocketRequest)
             {
                 using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                Console.WriteLine("Client verbunden!");
+                Logger.LogInfo("Client connected");
                 
                 IPlayer player = new RealPlayer(webSocket);
 
@@ -34,7 +38,8 @@ class Program
                     var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Verbindung geschlossen", CancellationToken.None);
+                        await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed connection", CancellationToken.None);
+                        Logger.LogInfo("Client disconnected");
                         break;
                     }
 
@@ -57,6 +62,8 @@ class Program
             }
         });
 
+        Logger.LogInfo("Server started");
         app.Run("http://0.0.0.0:5000");
+        Logger.LogInfo("Server stopped");
     }
 }
