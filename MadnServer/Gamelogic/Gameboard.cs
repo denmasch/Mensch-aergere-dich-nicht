@@ -183,7 +183,7 @@ public class Gameboard
         return null;
     }
 
-    public Figure GetFigure(int id, Color color)
+    public Figure GetFigure(Color color, int id)
     {
         var figures = GetAllFigures(color);
         return figures.First(f => f.Id == id);
@@ -212,6 +212,7 @@ public class Gameboard
             }
 
             destTile.OccupyingFigure = fig;
+            fig.IsHome = false;
             return true;
         }
 
@@ -276,7 +277,7 @@ public class Gameboard
     }
 
 
-    private int GetStartIndexForColor(Color color)
+    public int GetStartIndexForColor(Color color)
     {
         return ((int)color * _armLength) % PathLength;
     }
@@ -333,7 +334,7 @@ public class Gameboard
     /// </summary>
     /// <param name="color"></param>
     /// <returns></returns>
-    private List<Figure> GetAllFigures(Color color)
+    public List<Figure> GetAllFigures(Color color)
     {
         var figures = new List<Figure>();
 
@@ -370,6 +371,7 @@ public class Gameboard
             if (t.OccupyingFigure == null)
             {
                 t.OccupyingFigure = fig;
+                fig.IsHome = true;
                 break;
             }
         }

@@ -170,7 +170,7 @@ public class Game
         var figId = msg.FigureId;
         var col = fromPlayer.Color;
 
-        var fig = Gameboard.GetFigure(figId, col);
+        var fig = Gameboard.GetFigure(col, figId);
         Gameboard.MoveFigure(fig, col, msg.DiceRoll);
         
         Broadcast(new GameboardUpdatedMessage

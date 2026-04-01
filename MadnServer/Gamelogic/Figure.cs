@@ -15,5 +15,5 @@ public class Figure
     
     public int Id { get; private set; }
     
-    public bool IsHome { get; private set; }
+    public bool IsHome { get; set; }
 }
