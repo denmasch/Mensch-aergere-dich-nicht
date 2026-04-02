@@ -1,5 +1,6 @@
 ﻿using MadnShared.GameAssets;
 using MadnShared.Logger;
+using System.Threading.Tasks;
 
 namespace MadnClient;
 
@@ -9,5 +10,7 @@ public class Program
     {
         Logger.AddWriter(new FileWriter("log.txt"));
         Logger.LogInfo("Starting Client");
+        
+        new ConsoleClient().RunAsync("ws://localhost:5000/ws").GetAwaiter().GetResult();
     }
 }
