@@ -1,0 +1,13 @@
+bin
+obj
+**/bin
+**/obj
+.vs
+.vscode
+*.user
+*.suo
+*.log
+.git
+.gitignore
+docker-compose.yml
+
