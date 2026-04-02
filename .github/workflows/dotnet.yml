@@ -31,7 +31,7 @@ jobs:
     - name: Test
       run: dotnet test --no-build --verbosity normal
     - name: Publish Binaries
-      run: dotnet publish -c Release -o ./release-artifacts
+      run: dotnet publish ./MadnClient/MadnClient.csproj -c Release -o ./release-artifacts
     - name: Copy Compose
       run: cp docker-compose.yml ./release-artifacts/
     - name: Upload Artifacts
