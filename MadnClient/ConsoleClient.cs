@@ -41,7 +41,7 @@ public class ConsoleClient
             }
             else
             {
-                Console.WriteLine("Ungültige Auswahl.");
+                Console.WriteLine("Invalid choice");
             }
         }
     }
