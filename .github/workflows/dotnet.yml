@@ -1,7 +1,7 @@
 # This workflow will build a .NET project
 # For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
 
-name: .NET
+name: .NET and Docker
 
 on:
   push:
@@ -9,8 +9,12 @@ on:
   pull_request:
     branches: [ "main" ]
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/madn-server
+
 jobs:
-  build:
+  dotnet-build:
 
     runs-on: ubuntu-latest
 
@@ -26,3 +30,39 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
+    - name: Publish Binaries
+      run: dotnet publish -c Release -o ./release-artifacts
+    - name: Copy Compose
+      run: cp docker-compose.yml ./release-artifacts/
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: madn-release
+        path: ./release-artifacts/
+
+  docker-build-push:
+    needs: dotnet-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:    
+      contents: read 
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./MadnServer/Dockerfile 
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+
