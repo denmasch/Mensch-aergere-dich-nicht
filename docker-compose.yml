@@ -1,0 +1,10 @@
+services:
+  madnserver:
+    image: ghcr.io/denmasch/madn-server:latest
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./MadnServer/logs:/app/logs
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    restart: unless-stopped
