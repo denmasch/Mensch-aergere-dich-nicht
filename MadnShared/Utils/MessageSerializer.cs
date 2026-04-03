@@ -26,7 +26,7 @@ public static class MessageSerializer
             case MessageType.RollDice:
                 message = JsonSerializer.Deserialize<RollDiceMessage>(json);
                 break;
-            case MessageType.CreateGame:
+            case MessageType.StartGame:
                 message = JsonSerializer.Deserialize<StartGameMessage>(json);
                 break;
             case MessageType.GameCreated:
@@ -52,6 +52,9 @@ public static class MessageSerializer
                 break;
             case MessageType.GameLeft:
                 message = JsonSerializer.Deserialize<GameLeftMessage>(json);
+                break;
+            case MessageType.CreateGame:
+                message = JsonSerializer.Deserialize<CreateGameMessage>(json);
                 break;
             default:
                 message = null;
