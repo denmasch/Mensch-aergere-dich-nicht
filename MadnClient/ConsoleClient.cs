@@ -11,6 +11,7 @@ namespace MadnClient;
 
 public class ConsoleClient
 {
+    private readonly Guid _playerId = new();
     private ClientWebSocket? _socket;
     private CancellationTokenSource _cts = new();
 
@@ -33,6 +34,9 @@ public class ConsoleClient
             {
                 Console.WriteLine("Not implemented yet");
                 Logger.LogInfo($"Requested to join game");
+                // TODO: get available Games from server
+                Guid gameId = Guid.NewGuid();
+                await SendJoinGameAsync(gameId); 
             }
             else if (choice == "q" || choice == "Q")
             {
@@ -119,6 +123,25 @@ public class ConsoleClient
             Logger.LogError("Exception when sending CreateGame message: " + ex.Message);
         }
     }
+    
+    private async Task SendJoinGameAsync(Guid gameId)
+    {
+        try
+        {
+            var createMsg = new JoinGameMessage
+            {
+                GameId = gameId,
+                PlayerId = _playerId
+            };
+
+            await SendMessageAsync(createMsg);
+            Logger.LogInfo($"Sent JoinGame message with GameId {createMsg.GameId}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("Exception when sending JoinGame message: " + ex.Message);
+        }
+    }
 
     private async Task ReceiveLoopAsync(ClientWebSocket socket, CancellationToken ct)
     {
@@ -127,33 +150,11 @@ public class ConsoleClient
         {
             while (!ct.IsCancellationRequested && socket.State == WebSocketState.Open)
             {
-                var result = default(WebSocketReceiveResult);
-                try
-                {
-                    result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
-                }
-                catch (WebSocketException wsex)
-                {
-                    Logger.LogError("WebSocketException in ReceiveLoop: " + wsex.Message);
-                    break;
-                }
-                catch (OperationCanceledException)
-                {
-                    break;
-                }
-
+                var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
                 if (result.MessageType == WebSocketMessageType.Close)
                 {
                     Logger.LogInfo("Server closed");
-                    try
-                    {
-                        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", CancellationToken.None);
-                    }
-                    catch (WebSocketException wsex)
-                    {
-                        Logger.LogError("Fehler beim CloseAsync (ReceiveLoop): " + wsex.Message);
-                        try { socket.Abort(); } catch { }
-                    }
+                    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", CancellationToken.None);
                     break;
                 }
 
@@ -179,16 +180,7 @@ public class ConsoleClient
             {
                 if (_socket.State == WebSocketState.Open)
                 {
-                    try
-                    {
-                        await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", CancellationToken.None);
-                    }
-                    catch (WebSocketException wsex)
-                    {
-                        // Wenn Server bereits getrennt oder kein Close-Handshake gemacht hat, nicht crashen
-                        Logger.LogError("WebSocketException beim Schließen: " + wsex.Message);
-                        try { _socket.Abort(); } catch { }
-                    }
+                    await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", CancellationToken.None);
                 }
                 _socket.Dispose();
                 _socket = null;
