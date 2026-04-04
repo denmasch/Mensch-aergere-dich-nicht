@@ -5,7 +5,7 @@ namespace MadnShared.Messages.ClientToServer;
 /// <summary>
 /// Join an existing Game with the Player as Participant
 /// </summary>
-public class JoinGameMessage : IGameMessage
+public class JoinGameMessage : ILobbyMessage
 {
     public string Type => MessageType.JoinGame;
     

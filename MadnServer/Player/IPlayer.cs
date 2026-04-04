@@ -11,5 +11,5 @@ public interface IPlayer
     public Guid Id { get; }
     public Color Color { get; set; }
     
-    public Task SendAsync(IGameMessage message);
+    public Task SendAsync(IMessage message);
 }

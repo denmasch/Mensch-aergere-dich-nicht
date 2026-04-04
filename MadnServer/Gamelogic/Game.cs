@@ -14,7 +14,7 @@ namespace MadnServer.Gamelogic;
 
 public class Game
 {
-    public Guid Id { get; } = new Guid();
+    public Guid Id { get; } = Guid.NewGuid();
     public Gameboard Gameboard { get; set; }
     public List<IPlayer> Players { get; private set; }
 

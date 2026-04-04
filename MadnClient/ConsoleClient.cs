@@ -94,14 +94,14 @@ public class ConsoleClient
         }
     }
 
-    private async Task SendMessageAsync(IGameMessage gameMessage)
+    private async Task SendMessageAsync(IMessage message)
     {
         if (_socket == null || _socket.State != WebSocketState.Open)
         {
             Logger.LogError("Cannot send message, not connected to server.");
             return;
         }
-        var json = MessageSerializer.Serialize(gameMessage);
+        var json = MessageSerializer.Serialize(message);
         var buffer = Encoding.UTF8.GetBytes(json);
         await _socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
     }
@@ -112,11 +112,10 @@ public class ConsoleClient
         {
             var createMsg = new CreateGameMessage
             {
-                GameId = Guid.NewGuid()
             };
 
             await SendMessageAsync(createMsg);
-            Logger.LogInfo($"Sent CreateGame message with GameId {createMsg.GameId}");
+            Logger.LogInfo($"Sent CreateGame message");
         }
         catch (Exception ex)
         {

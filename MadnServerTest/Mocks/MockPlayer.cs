@@ -9,14 +9,14 @@ public class MockPlayer : IPlayer
     public Guid Id { get; } = Guid.NewGuid();
     public Color Color { get; set; }
 
-    public List<IGameMessage> SentMessages { get; } = new();
+    public List<IMessage> SentMessages { get; } = new();
 
     public MockPlayer()
     {
         
     }
 
-    public Task SendAsync(IGameMessage message)
+    public Task SendAsync(IMessage message)
     {
         SentMessages.Add(message);
         return Task.CompletedTask;

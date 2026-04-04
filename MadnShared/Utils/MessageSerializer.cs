@@ -7,16 +7,16 @@ namespace MadnShared.Utils;
 
 public static class MessageSerializer
 {
-    public static string Serialize(IGameMessage message)
+    public static string Serialize(IMessage message)
     {
         return JsonSerializer.Serialize(message, message.GetType());
     }
 
-    public static IGameMessage? Deserialize(string json)
+    public static IMessage? Deserialize(string json)
     {
         var doc = JsonDocument.Parse(json);
         var type = doc.RootElement.GetProperty("Type").GetString();
-        IGameMessage? message;
+        IMessage? message;
         
         switch (type)
         {

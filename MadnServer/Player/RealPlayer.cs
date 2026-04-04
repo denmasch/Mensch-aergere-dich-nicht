@@ -22,7 +22,7 @@ public class RealPlayer : IPlayer
     
     public Color Color { get; set; }
 
-    public async Task SendAsync(IGameMessage message)
+    public async Task SendAsync(IMessage message)
     {
         if (_webSocket == null)
             return;

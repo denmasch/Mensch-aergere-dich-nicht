@@ -44,17 +44,12 @@ class Program
                     }
 
                     var msgJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    var gameMsg = MessageSerializer.Deserialize(msgJson);
+                    var msg = MessageSerializer.Deserialize(msgJson);
                     Logger.LogInfo("Received Message: "+ msgJson);
-                    if (gameMsg is null)
+                    if (msg is null)
                         continue;
 
-                    Guid gameId = gameMsg.GameId;
-                    var game = GameManager.GetGame(gameId);
-                    if (game != null)
-                    {
-                        game.HandleMessage(player, gameMsg);
-                    }
+                    MessageDispatcher.Dispatch(player, msg);
                 }
             }
             else
