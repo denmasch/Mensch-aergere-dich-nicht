@@ -16,7 +16,7 @@ public class CpuPlayerEasy : ICpuPlayer
     public Guid Id { get; } = Guid.NewGuid();
     
     // Stup implemntation for now
-    public Task SendAsync(IGameMessage message)
+    public Task SendAsync(IMessage message)
     {
         return Task.CompletedTask;
     }

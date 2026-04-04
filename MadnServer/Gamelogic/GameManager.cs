@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Linq;
 using MadnServer.Player;
 
 namespace MadnServer.Gamelogic;
@@ -12,9 +13,9 @@ public static class GameManager
 {
     private static readonly ConcurrentDictionary<Guid, Game> _games = new();
 
-    public static Game CreateGame()
+    public static Game CreateGame(IPlayer player)
     {
-        var game = new Game(new List<IPlayer>());
+        var game = new Game(new List<IPlayer>(){player});
         _games[game.Id] = game;
         return game;
     }
@@ -23,6 +24,11 @@ public static class GameManager
     {
         _games.TryGetValue(gameId, out var game);
         return game;
+    }
+
+    public static Dictionary<Guid, int> GetAllGames()
+    {
+        return _games.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Players.Count);
     }
 
     public static bool RemoveGame(Guid gameId)
