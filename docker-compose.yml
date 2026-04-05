@@ -10,4 +10,4 @@ services:
       - ./MadnServer/logs:/app/logs
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-    restart: unless-stopped
+    restart: on-failure

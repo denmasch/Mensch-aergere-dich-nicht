@@ -34,6 +34,8 @@ jobs:
       run: dotnet publish ./MadnClient/MadnClient.csproj -c Release -o ./release-artifacts
     - name: Copy Compose
       run: cp docker-compose.yml ./release-artifacts/
+    - name: Copy Start Script
+      run: cp madn.py ./release-artifacts/
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:

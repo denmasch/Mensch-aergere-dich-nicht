@@ -10,20 +10,27 @@ For the official Rules [click here](https://www.schmidtspiele.de/files/Produkte/
 # How to play
 ## Prerequisites
 - Docker and Docker Compose installed on your machine.
+- python istalled, to run the start script
 
 ## Steps to play
 1. Download the last realease from the [releasepage]().
 2. Unzip the downloaded file.
 3. Open a terminal and navigate to the unzipped directory.
-4. Start the game server using Docker Compose:
+4. Run the start script to set up the game server and client:
+   ```bash
+   python ./madn.py
+   ```
+## Launch manually
+1. Follow steps 1-3 from the previous section.
+2. Start the game server using Docker Compose:
    ```bash
    docker compose up -d
    ```
-5. Run the client application:
+3. Run the client application:
    ```bash
-   MadnClient
+   ./MadnClient
    ```
-6. After playing, you can stop the server using:
+4. After playing, you can stop the server using:
    ```bash
    docker compose down
    ```
