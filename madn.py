@@ -27,10 +27,10 @@ def start_clients(count):
 
     for i in range(count):
         if os_type == "Windows":
-            subprocess.Popen(["start", "cmd", "/k", "MadnClient"], shell=True)
+            subprocess.Popen(["start", "cmd", "/k", r"windows\MadnClient.exe"], shell=True)
         else:
             terminal = get_linux_terminal()
-            subprocess.Popen([terminal, "-e", "./MadnClient"])
+            subprocess.Popen([terminal, "-e", "./linux/MadnClient"])
 
 if __name__ == "__main__":
     check_dependencies()

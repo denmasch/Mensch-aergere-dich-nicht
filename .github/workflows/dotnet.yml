@@ -49,10 +49,8 @@ jobs:
           -o ./release-artifacts/linux
     - name: Copy Shared Files
       run: |
-        cp docker-compose.yml ./release-artifacts/windows/
-        cp madn.py ./release-artifacts/windows/
-        cp docker-compose.yml ./release-artifacts/linux/
-        cp madn.py ./release-artifacts/linux/
+        cp docker-compose.yml ./release-artifacts/
+        cp madn.py ./release-artifacts/
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
