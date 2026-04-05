@@ -30,12 +30,29 @@ jobs:
       run: dotnet build --no-restore
     - name: Test
       run: dotnet test --no-build --verbosity normal
-    - name: Publish Binaries
-      run: dotnet publish ./MadnClient/MadnClient.csproj -c Release -o ./release-artifacts
-    - name: Copy Compose
-      run: cp docker-compose.yml ./release-artifacts/
-    - name: Copy Start Script
-      run: cp madn.py ./release-artifacts/
+    - name: Publish Windows (x64)
+      run: |
+        dotnet publish ./MadnClient/MadnClient.csproj \
+          -c Release \
+          -r win-x64 \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -o ./release-artifacts/windows
+
+    - name: Publish Linux (x64)
+      run: |
+        dotnet publish ./MadnClient/MadnClient.csproj \
+          -c Release \
+          -r linux-x64 \
+          --self-contained true \
+          -p:PublishSingleFile=true \
+          -o ./release-artifacts/linux
+    - name: Copy Shared Files
+      run: |
+        cp docker-compose.yml ./release-artifacts/windows/
+        cp madn.py ./release-artifacts/windows/
+        cp docker-compose.yml ./release-artifacts/linux/
+        cp madn.py ./release-artifacts/linux/
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
