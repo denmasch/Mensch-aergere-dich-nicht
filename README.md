@@ -27,9 +27,16 @@ For the official Rules [click here](https://www.schmidtspiele.de/files/Produkte/
    docker compose up -d
    ```
 3. Run the client application:
-   ```bash
-   ./MadnClient
-   ```
+   - On Linux: 
+      ```bash
+      cd ./linux
+      ./MadnClient
+      ```
+    - On Windows:
+        ```bash
+        cd .\windows
+        MadnClient.exe
+        ```
 4. After playing, you can stop the server using:
    ```bash
    docker compose down

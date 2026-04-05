@@ -20,17 +20,17 @@ def get_linux_terminal():
 
 def start_server():
     print("Start madn server via docker compose")
-    subprocess.Popen(["docker", "compose", "up", "-d"])
-
+    process = subprocess.Popen(["docker", "compose", "up", "-d"])
+    process.wait()
 def start_clients(count):
     os_type = platform.system()
 
     for i in range(count):
         if os_type == "Windows":
-            subprocess.Popen(["start", "cmd", "/k", "MadnClient"], shell=True)
+            subprocess.Popen(["start", "cmd", "/k", r"windows\MadnClient.exe"], shell=True)
         else:
             terminal = get_linux_terminal()
-            subprocess.Popen([terminal, "-e", "./MadnClient"])
+            subprocess.Popen([terminal, "-e", "./linux/MadnClient"])
 
 if __name__ == "__main__":
     check_dependencies()
