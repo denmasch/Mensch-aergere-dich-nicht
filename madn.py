@@ -20,8 +20,8 @@ def get_linux_terminal():
 
 def start_server():
     print("Start madn server via docker compose")
-    subprocess.Popen(["docker", "compose", "up", "-d"])
-
+    process = subprocess.Popen(["docker", "compose", "up", "-d"])
+    process.wait()
 def start_clients(count):
     os_type = platform.system()
 
