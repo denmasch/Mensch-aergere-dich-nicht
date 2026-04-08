@@ -14,12 +14,16 @@ public class ConsoleClient
 {    
     private readonly Guid _playerId = Guid.NewGuid();
     private TaskCompletionSource<ListGamesResponseMessage> _listGamesTcs;
+    private TaskCompletionSource<GameCreatedMessage> _createGameTcs;
+    private TaskCompletionSource<GameJoinedMessage> _joinGameTcs;
     private readonly IWebSocketClient _wsClient;
+    private readonly GameFrontend _frontend;
 
     public ConsoleClient(IWebSocketClient wsClient)
     {
         _wsClient = wsClient;
         _wsClient.MessageReceived += OnWsMessageReceived;
+        _frontend = new GameFrontend(_wsClient, _playerId);
     }
 
     public async Task RunAsync(string serverUri)
@@ -33,9 +37,20 @@ public class ConsoleClient
             var choice = ShowMenu();
             if (choice == "1")
             {
-                Console.WriteLine("Creating game...");
+                Console.Clear();
+                Console.WriteLine("Erstelle Spiel ...");
                 Logger.LogInfo("Requested to create game");
-                await SendCreateGameAsync();
+                var response = await SendCreateGameAsync();
+                if (response == null)
+                {
+                    Console.WriteLine("Spiel konnte nicht erstellt werden.");
+                    Logger.LogError("Failed to create game");
+                }
+                else
+                {
+                    await _frontend.EnterGameAsync(response.GameId);
+                }
+                
             }
             else if (choice == "2")
             {
@@ -53,9 +68,17 @@ public class ConsoleClient
                 else if (game != null && int.TryParse(game, out int id))
                 {
                     var gameId = response.Games.Keys.ElementAtOrDefault(id - 1);
-                    await SendJoinGameAsync(gameId);
-                    
-                    Logger.LogInfo($"Requested to join game");
+                    var res = await SendJoinGameAsync(gameId);
+
+                    if (res == null)
+                    {
+                        Console.WriteLine("Beitritt nicht möglich");
+                        Logger.LogInfo("Failed to join game");
+                    }
+                    else
+                    {
+                        await _frontend.EnterGameAsync(res.GameId);
+                    }
                 }
                 else
                 {
@@ -100,8 +123,8 @@ public class ConsoleClient
     {
         Console.Clear();
         Console.WriteLine("Verfügbare Spiele:");
-        const string headerFormat = "| {0,-3} | {1,-36} | {2,-3} |";
-        const string divider = "+-----+--------------------------------------+-----+";
+        const string headerFormat = "| {0,-3} | {1,-36} | {2,7} |";
+        const string divider = "+-----+--------------------------------------+---------+";
 
         Console.WriteLine(divider);
         Console.WriteLine(headerFormat, "Nr.", "GameId", "Spieler");
@@ -131,27 +154,29 @@ public class ConsoleClient
         }
     }
 
-    private async Task SendCreateGameAsync()
+    private async Task<GameCreatedMessage> SendCreateGameAsync()
     {
         try
         {
-            var createMsg = new CreateGameMessage
-            {
-            };
+            _createGameTcs = new TaskCompletionSource<GameCreatedMessage>();
+            var createMsg = new CreateGameMessage();
 
             await SendMessageAsync(createMsg);
             Logger.LogInfo($"Sent CreateGame message");
+            return await _createGameTcs.Task;
         }
         catch (Exception ex)
         {
             Logger.LogError("Exception when sending CreateGame message: " + ex.Message);
+            return null;
         }
     }
     
-    private async Task SendJoinGameAsync(Guid gameId)
+    private async Task<GameJoinedMessage> SendJoinGameAsync(Guid gameId)
     {
         try
         {
+            _joinGameTcs = new TaskCompletionSource<GameJoinedMessage>();
             var createMsg = new JoinGameMessage
             {
                 GameId = gameId,
@@ -160,10 +185,12 @@ public class ConsoleClient
 
             await SendMessageAsync(createMsg);
             Logger.LogInfo($"Sent JoinGame message with GameId {createMsg.GameId}");
+            return await _joinGameTcs.Task;
         }
         catch (Exception ex)
         {
             Logger.LogError("Exception when sending JoinGame message: " + ex.Message);
+            return null;
         }
     }
     
@@ -190,11 +217,18 @@ public class ConsoleClient
         Logger.LogInfo($"Received message: {message}");
         switch (message)
         {
-            case CreateGameMessage createMsg:
+            case GameCreatedMessage createdMsg:
+                _createGameTcs?.TrySetResult(createdMsg);
                 break;
             case ListGamesResponseMessage listResponse:
                 _listGamesTcs?.TrySetResult(listResponse);
                 break;
+            case GameJoinedMessage joinResponse:
+                _joinGameTcs?.TrySetResult(joinResponse);
+                break;
+             default:
+                 Logger.LogWarning($"Unhandled message type: {message.GetType().Name}");
+                 break;
         }
     }
 
