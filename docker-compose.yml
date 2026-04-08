@@ -7,7 +7,7 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - ./MadnServer/logs:/app/logs
+      - ./logs:/app/logs
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
     restart: on-failure
