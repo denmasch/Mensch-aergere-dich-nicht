@@ -36,12 +36,12 @@ public static class GameManager
         return _games.TryRemove(gameId, out _);
     }
 
-    public static bool TryJoinGame(Guid gameId, IPlayer player)
+    public static Game TryJoinGame(Guid gameId, IPlayer player)
     {
         if (!_games.TryGetValue(gameId, out var game))
-            return false;
+            return null;
 
         game.AddPlayer(player);
-        return true;
+        return game;
     }
 }
