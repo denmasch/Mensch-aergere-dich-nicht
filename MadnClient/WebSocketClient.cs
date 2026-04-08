@@ -46,26 +46,57 @@ public class WebSocketClient : IWebSocketClient, IDisposable
             return;
         }
         var json = MessageSerializer.Serialize(message);
-        var buffer = Encoding.UTF8.GetBytes(json);
-        await _socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+        var bytes = Encoding.UTF8.GetBytes(json);
+        using (var ms = new MemoryStream(bytes))
+        {
+            int bufferSize = 1024 * 4; 
+            byte[] buffer = new byte[bufferSize];
+            int bytesRead;
+
+            while ((bytesRead = ms.Read(buffer, 0, bufferSize)) > 0)
+            {
+                bool isLastPart = (ms.Position == ms.Length);
+
+                await _socket.SendAsync(
+                    new ArraySegment<byte>(buffer, 0, bytesRead),
+                    WebSocketMessageType.Text,
+                    isLastPart,
+                    CancellationToken.None
+                );
+            }
+        }
     }
 
     private async Task ReceiveLoopAsync(ClientWebSocket socket, CancellationToken ct)
     {
         var buffer = new byte[4096];
+        using var ms = new MemoryStream();
         try
         {
             while (!ct.IsCancellationRequested && socket.State == WebSocketState.Open)
             {
-                var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    Logger.LogInfo("Server closed");
-                    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", CancellationToken.None);
-                    break;
-                }
+                WebSocketReceiveResult result;
+                ms.SetLength(0); 
+                ms.Seek(0, SeekOrigin.Begin);
 
-                var msgJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                do
+                {
+                    result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
+                    if (result.MessageType == WebSocketMessageType.Close)
+                    {
+                        Logger.LogInfo("Server closed");
+                        await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing",
+                            CancellationToken.None);
+                        break;
+                    }
+                    ms.Write(buffer, 0, result.Count);
+                }
+                while (!result.EndOfMessage);
+
+                ms.Seek(0, SeekOrigin.Begin);
+                using var reader = new StreamReader(ms, Encoding.UTF8, leaveOpen: true);
+                var msgJson = await reader.ReadToEndAsync();
+                
                 var gameMsg = MessageSerializer.Deserialize(msgJson);
                 
                 try

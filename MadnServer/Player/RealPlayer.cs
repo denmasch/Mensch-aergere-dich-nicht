@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
@@ -31,8 +32,24 @@ public class RealPlayer : IPlayer
             return;
 
         var json = MessageSerializer.Serialize(message);
-        var buffer = Encoding.UTF8.GetBytes(json);
+        var bytes = Encoding.UTF8.GetBytes(json);
+        using (var ms = new MemoryStream(bytes))
+        {
+            int bufferSize = 1024 * 4; 
+            byte[] buffer = new byte[bufferSize];
+            int bytesRead;
 
-        await _webSocket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, endOfMessage: true, cancellationToken: CancellationToken.None);
+            while ((bytesRead = ms.Read(buffer, 0, bufferSize)) > 0)
+            {
+                bool isLastPart = (ms.Position == ms.Length);
+            
+                await _webSocket.SendAsync(
+                    new ArraySegment<byte>(buffer, 0, bytesRead),
+                    WebSocketMessageType.Text,
+                    isLastPart, 
+                    CancellationToken.None
+                );
+            }
+        }
     }
 }
