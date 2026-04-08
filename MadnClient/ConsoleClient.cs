@@ -14,6 +14,7 @@ public class ConsoleClient
 {    
     private readonly Guid _playerId = Guid.NewGuid();
     private TaskCompletionSource<ListGamesResponseMessage> _listGamesTcs;
+    private TaskCompletionSource<GameCreatedMessage> _createGameTcs;
     private readonly IWebSocketClient _wsClient;
 
     public ConsoleClient(IWebSocketClient wsClient)
@@ -33,9 +34,16 @@ public class ConsoleClient
             var choice = ShowMenu();
             if (choice == "1")
             {
-                Console.WriteLine("Creating game...");
+                Console.Clear();
+                Console.WriteLine("Erstelle Spiel ...");
                 Logger.LogInfo("Requested to create game");
-                await SendCreateGameAsync();
+                var response = await SendCreateGameAsync();
+                if (response == null)
+                {
+                    Console.WriteLine("Spiel konnte nicht erstellt werden.");
+                    Logger.LogError("Failed to create game");
+                }
+                
             }
             else if (choice == "2")
             {
@@ -131,20 +139,21 @@ public class ConsoleClient
         }
     }
 
-    private async Task SendCreateGameAsync()
+    private async Task<GameCreatedMessage> SendCreateGameAsync()
     {
         try
         {
-            var createMsg = new CreateGameMessage
-            {
-            };
+            _createGameTcs = new TaskCompletionSource<GameCreatedMessage>();
+            var createMsg = new CreateGameMessage();
 
             await SendMessageAsync(createMsg);
             Logger.LogInfo($"Sent CreateGame message");
+            return await _createGameTcs.Task;
         }
         catch (Exception ex)
         {
             Logger.LogError("Exception when sending CreateGame message: " + ex.Message);
+            return null;
         }
     }
     
@@ -190,7 +199,8 @@ public class ConsoleClient
         Logger.LogInfo($"Received message: {message}");
         switch (message)
         {
-            case CreateGameMessage createMsg:
+            case GameCreatedMessage createdMsg:
+                _createGameTcs?.TrySetResult(createdMsg);
                 break;
             case ListGamesResponseMessage listResponse:
                 _listGamesTcs?.TrySetResult(listResponse);

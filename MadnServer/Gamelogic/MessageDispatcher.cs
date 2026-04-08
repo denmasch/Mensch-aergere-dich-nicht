@@ -51,7 +51,8 @@ public static class MessageDispatcher
         switch (lobbyMessage)
         {
             case CreateGameMessage createGameMessage:
-                GameManager.CreateGame(fromPlayer);
+                var game = GameManager.CreateGame(fromPlayer);
+                fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id });
                 break;
             case JoinGameMessage joinGameMessage:
                 GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
