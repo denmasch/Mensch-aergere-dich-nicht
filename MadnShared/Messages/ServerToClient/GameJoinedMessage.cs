@@ -1,3 +1,4 @@
+using MadnShared.GameAssets;
 using MadnShared.Messages.Base;
 
 namespace MadnShared.Messages.ServerToClient;
@@ -12,4 +13,6 @@ public class GameJoinedMessage : IGameMessage
     public Guid GameId { get; set; }
     
     public Guid PlayerId { get; set; }
+    
+    public GameboardDTO Gameboard { get; set; }
 }

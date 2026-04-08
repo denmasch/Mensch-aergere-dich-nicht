@@ -47,16 +47,17 @@ public static class MessageDispatcher
         var typeName = lobbyMessage.GetType().Name;
 
         Logger.LogInfo($"Handling lobby message of type {typeName} from player {fromPlayer.Id}");
-
+        
+        Game game;
         switch (lobbyMessage)
         {
             case CreateGameMessage createGameMessage:
-                var game = GameManager.CreateGame(fromPlayer);
-                fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id });
+                game = GameManager.CreateGame(fromPlayer);
+                fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id , Gameboard = game.Gameboard.ToDto() });
                 break;
             case JoinGameMessage joinGameMessage:
-                GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
-                fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId });
+                game = GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
+                fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId , Gameboard = game.Gameboard.ToDto()});
                 break;
             case ListGamesMessage listGamesMessage:
                 var games = GameManager.GetAllGames();

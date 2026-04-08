@@ -5,6 +5,6 @@ namespace MadnShared.GameAssets;
 public class GameboardDTO
 {
     public TileDTO[] Path { get; set; }
-    public TileDTO[] Homes { get; set; }
-    public TileDTO[] Targets { get; set; }
+    public Dictionary<Color, TileDTO[]> Homes { get; set; }
+    public Dictionary<Color, TileDTO[]> Targets { get; set; }
 }

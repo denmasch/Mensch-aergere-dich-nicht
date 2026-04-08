@@ -6,7 +6,7 @@ namespace MadnShared.GameAssets;
 public class FigureDTO
 {
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public Color Color { get; private set; }
+    public Color Color { get; set; }
     
-    public int Id { get; private set; }
+    public int Id { get; set; }
 }
