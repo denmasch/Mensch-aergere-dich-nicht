@@ -16,7 +16,7 @@ class Program
     static void Main(string[] args)
     {
         Logger.AddWriter(new ConsoleWriter());
-        Logger.AddWriter(new FileWriter("logs/log.txt"));
+        Logger.AddWriter(new FileWriter("logs/ServerLog.txt"));
         
         var builder = WebApplication.CreateBuilder(args);
         var app = builder.Build();
