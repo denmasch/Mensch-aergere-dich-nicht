@@ -100,8 +100,8 @@ public class ConsoleClient
     {
         Console.Clear();
         Console.WriteLine("Verfügbare Spiele:");
-        const string headerFormat = "| {0,-3} | {1,-36} | {2,-3} |";
-        const string divider = "+-----+--------------------------------------+-----+";
+        const string headerFormat = "| {0,-3} | {1,-36} | {2,7} |";
+        const string divider = "+-----+--------------------------------------+---------+";
 
         Console.WriteLine(divider);
         Console.WriteLine(headerFormat, "Nr.", "GameId", "Spieler");
