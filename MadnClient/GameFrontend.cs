@@ -60,6 +60,11 @@ namespace MadnClient
             Console.WriteLine("Zurück zum Menü...");
             await Task.Delay(300);
         }
+        
+        private void DrawGameBoard()
+        {
+            Console.Clear();
+        }
     }
 }
 
