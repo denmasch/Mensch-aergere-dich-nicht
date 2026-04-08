@@ -10,8 +10,8 @@ public class TileDTO
     public bool IsOccupied => OccupyingFigure != null;
     
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public TileType Type { get; private set; }
+    public TileType Type { get; set; }
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public Color Color { get; private set; }
+    public Color Color { get; set; }
 }

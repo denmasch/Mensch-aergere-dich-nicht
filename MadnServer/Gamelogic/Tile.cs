@@ -1,4 +1,5 @@
 using MadnShared.Enums;
+using MadnShared.GameAssets;
 
 namespace MadnServer.Gamelogic;
 
@@ -14,6 +15,17 @@ public class Tile
         Type = tileType;
         Color = color;
     }
+    
+    public TileDTO toDto()
+    {
+        return new TileDTO
+        {
+            Type = this.Type,
+            Color = this.Color,
+            OccupyingFigure = this.OccupyingFigure?.toDto()
+        };
+    }
+    
     public Figure? OccupyingFigure { get; set; }
     
     public bool IsOccupied => OccupyingFigure != null;

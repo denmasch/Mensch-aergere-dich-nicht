@@ -1,4 +1,5 @@
 using MadnShared.Enums;
+using MadnShared.GameAssets;
 
 namespace MadnServer.Gamelogic;
 
@@ -16,4 +17,13 @@ public class Figure
     public int Id { get; private set; }
     
     public bool IsHome { get; set; }
+    
+    public FigureDTO toDto()
+    {
+        return new FigureDTO
+        {
+            Color = this.Color,
+            Id = this.Id,
+        };
+    }
 }

@@ -179,8 +179,12 @@ public class Gameboard
     
     public GameboardDTO ToDto()
     {
-        //TODO: Implement toDto conversion
-        return null;
+        return new GameboardDTO()
+        {
+            Path = Path.Select(t => t.toDto()).ToArray(),
+            Homes = Homes.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Select(t => t.toDto()).ToArray()),
+            Targets = Targets.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Select(t => t.toDto()).ToArray())
+        };
     }
 
     public Figure GetFigure(Color color, int id)
