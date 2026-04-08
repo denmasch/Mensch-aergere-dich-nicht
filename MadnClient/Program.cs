@@ -11,6 +11,8 @@ public class Program
         Logger.AddWriter(new FileWriter("logs/ClientLog.txt"));
         Logger.LogInfo("Starting Client");
         
-        new ConsoleClient().RunAsync("ws://localhost:5000/ws").GetAwaiter().GetResult();
+        var wsClient = new WebSocketClient();
+        var consoleClient = new ConsoleClient(wsClient);
+        consoleClient.RunAsync("ws://localhost:5000/ws").GetAwaiter().GetResult();
     }
 }

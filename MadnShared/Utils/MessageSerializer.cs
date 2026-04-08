@@ -56,6 +56,12 @@ public static class MessageSerializer
             case MessageType.CreateGame:
                 message = JsonSerializer.Deserialize<CreateGameMessage>(json);
                 break;
+            case MessageType.ListGames:
+                message = JsonSerializer.Deserialize<ListGamesMessage>(json);
+                break;
+            case MessageType.ListGamesResponse:
+                message = JsonSerializer.Deserialize<ListGamesResponseMessage>(json);
+                break;
             default:
                 message = null;
                 break;

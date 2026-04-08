@@ -6,18 +6,25 @@ using System.Threading.Tasks;
 using MadnShared.Logger;
 using MadnShared.Messages.Base;
 using MadnShared.Messages.ClientToServer;
+using MadnShared.Messages.ServerToClient;
 using MadnShared.Utils;
 namespace MadnClient;
 
 public class ConsoleClient
-{
-    private readonly Guid _playerId = new();
-    private ClientWebSocket? _socket;
-    private CancellationTokenSource _cts = new();
+{    
+    private readonly Guid _playerId = Guid.NewGuid();
+    private TaskCompletionSource<ListGamesResponseMessage> _listGamesTcs;
+    private readonly IWebSocketClient _wsClient;
+
+    public ConsoleClient(IWebSocketClient wsClient)
+    {
+        _wsClient = wsClient;
+        _wsClient.MessageReceived += OnWsMessageReceived;
+    }
 
     public async Task RunAsync(string serverUri)
     {
-        await EnsureConnectedAsync(serverUri);
+        await _wsClient.ConnectAsync(serverUri);
         ShowWelcome();
         Console.ReadKey(true);
         
@@ -32,11 +39,28 @@ public class ConsoleClient
             }
             else if (choice == "2")
             {
-                Console.WriteLine("Not implemented yet");
-                Logger.LogInfo($"Requested to join game");
-                // TODO: get available Games from server
-                Guid gameId = Guid.NewGuid();
-                await SendJoinGameAsync(gameId); 
+                var response = await ListGamesAsync();
+                if (response.Games == null)
+                {
+                    Logger.LogError("Failed to get game list from server.");
+                    continue;
+                }
+                var game = ShowGameList(response);
+                if (game == "b" || game == "B")
+                {
+                    continue;
+                }
+                else if (game != null && int.TryParse(game, out int id))
+                {
+                    var gameId = response.Games.Keys.ElementAtOrDefault(id - 1);
+                    await SendJoinGameAsync(gameId);
+                    
+                    Logger.LogInfo($"Requested to join game");
+                }
+                else
+                {
+                    Console.WriteLine("Invalid choice");
+                }
             }
             else if (choice == "q" || choice == "Q")
             {
@@ -71,39 +95,40 @@ public class ConsoleClient
         Console.WriteLine(key.KeyChar);
         return key.KeyChar.ToString();
     }
-
-    private async Task EnsureConnectedAsync(string serverUri)
+    
+    private string ShowGameList(ListGamesResponseMessage response)
     {
-        if (_socket != null && _socket.State == WebSocketState.Open)
-            return;
+        Console.Clear();
+        Console.WriteLine("Verfügbare Spiele:");
+        const string headerFormat = "| {0,-3} | {1,-36} | {2,-3} |";
+        const string divider = "+-----+--------------------------------------+-----+";
 
-        _socket = new ClientWebSocket();
-        try
+        Console.WriteLine(divider);
+        Console.WriteLine(headerFormat, "Nr.", "GameId", "Spieler");
+        Console.WriteLine(divider);
+
+        int i = 1;
+        foreach (var game in response.Games)
         {
-            Logger.LogInfo("Connecting to " + serverUri);
-            await _socket.ConnectAsync(new Uri(serverUri), CancellationToken.None);
-            Logger.LogInfo("Connected to server at " + serverUri);
-            _cts = new CancellationTokenSource();
-            _ = Task.Run(() => ReceiveLoopAsync(_socket, _cts.Token));
+            Console.WriteLine(headerFormat, i, game.Key, $"{game.Value}/4");
+            i++;
         }
-        catch (Exception ex)
-        {
-            Logger.LogError("WebSocket connect failed: " + ex.Message);
-            _socket?.Dispose();
-            _socket = null;
-        }
+        Console.WriteLine(divider);
+        Console.WriteLine("Geben Sie eine Nummer ein, um einem Spiel beizutreten, oder 'b' um zurück zum Menü zu gehen:");
+        var input = Console.ReadLine();
+        return input ?? string.Empty;
     }
 
     private async Task SendMessageAsync(IMessage message)
     {
-        if (_socket == null || _socket.State != WebSocketState.Open)
+        try
         {
-            Logger.LogError("Cannot send message, not connected to server.");
-            return;
+            await _wsClient.SendAsync(message);
         }
-        var json = MessageSerializer.Serialize(message);
-        var buffer = Encoding.UTF8.GetBytes(json);
-        await _socket.SendAsync(new ArraySegment<byte>(buffer), WebSocketMessageType.Text, true, CancellationToken.None);
+        catch (Exception ex)
+        {
+            Logger.LogError("Cannot send message: " + ex.Message);
+        }
     }
 
     private async Task SendCreateGameAsync()
@@ -141,32 +166,35 @@ public class ConsoleClient
             Logger.LogError("Exception when sending JoinGame message: " + ex.Message);
         }
     }
-
-    private async Task ReceiveLoopAsync(ClientWebSocket socket, CancellationToken ct)
+    
+    private async Task<ListGamesResponseMessage> ListGamesAsync()
     {
-        var buffer = new byte[4096];
         try
         {
-            while (!ct.IsCancellationRequested && socket.State == WebSocketState.Open)
-            {
-                var result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
-                if (result.MessageType == WebSocketMessageType.Close)
-                {
-                    Logger.LogInfo("Server closed");
-                    await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", CancellationToken.None);
-                    break;
-                }
+            _listGamesTcs = new TaskCompletionSource<ListGamesResponseMessage>();
+            var listMsg = new ListGamesMessage();
 
-                var msgJson = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                var gameMsg = MessageSerializer.Deserialize(msgJson);
-                
-                // TODO: messaghandling
-                Console.WriteLine(gameMsg);
-            }
+            await SendMessageAsync(listMsg);
+            Logger.LogInfo($"Sent ListGames message");
+            return await _listGamesTcs.Task;
         }
         catch (Exception ex)
         {
-            Logger.LogError("ReceiveLoop error: " + ex.Message);
+            Logger.LogError("Exception when sending JoinGame message: " + ex.Message);
+            return null;
+        }
+    }
+
+    private void OnWsMessageReceived(IMessage message)
+    {
+        Logger.LogInfo($"Received message: {message}");
+        switch (message)
+        {
+            case CreateGameMessage createMsg:
+                break;
+            case ListGamesResponseMessage listResponse:
+                _listGamesTcs?.TrySetResult(listResponse);
+                break;
         }
     }
 
@@ -174,16 +202,7 @@ public class ConsoleClient
     {
         try
         {
-            _cts.Cancel();
-            if (_socket != null)
-            {
-                if (_socket.State == WebSocketState.Open)
-                {
-                    await _socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing", CancellationToken.None);
-                }
-                _socket.Dispose();
-                _socket = null;
-            }
+            await _wsClient.CloseAsync();
         }
         catch (Exception ex)
         {
