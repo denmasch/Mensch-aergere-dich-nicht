@@ -51,10 +51,12 @@ public static class MessageDispatcher
         switch (lobbyMessage)
         {
             case CreateGameMessage createGameMessage:
-                GameManager.CreateGame(fromPlayer);
+                var game = GameManager.CreateGame(fromPlayer);
+                fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id });
                 break;
             case JoinGameMessage joinGameMessage:
                 GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
+                fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId });
                 break;
             case ListGamesMessage listGamesMessage:
                 var games = GameManager.GetAllGames();
