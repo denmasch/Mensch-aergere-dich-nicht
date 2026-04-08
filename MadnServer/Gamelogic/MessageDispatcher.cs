@@ -56,6 +56,7 @@ public static class MessageDispatcher
                 break;
             case JoinGameMessage joinGameMessage:
                 GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
+                fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId });
                 break;
             case ListGamesMessage listGamesMessage:
                 var games = GameManager.GetAllGames();
