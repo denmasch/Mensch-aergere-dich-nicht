@@ -13,6 +13,21 @@ namespace MadnClient
     {
         private readonly IWebSocketClient _wsClient;
         private readonly Guid _playerId;
+        
+        /// <summary>
+        /// Predefined mapping of (x,y) coordinates to path indices for the 11x11 board.
+        /// </summary>
+        private static readonly Dictionary<(int x, int y), int> _pathMap = new Dictionary<(int, int), int>
+        {
+            {(0,4), 0}, {(1,4), 1}, {(2,4), 2}, {(3,4), 3}, {(4,4), 4},
+            {(4,3), 5}, {(4,2), 6}, {(4,1), 7}, {(4,0), 8}, {(5,0), 9},
+            {(6,0), 10}, {(6,1), 11}, {(6,2), 12}, {(6,3), 13}, {(6,4), 14},
+            {(7,4), 15}, {(8,4), 16}, {(9,4), 17}, {(10,4), 18}, {(10,5), 19},
+            {(10,6), 20}, {(9,6), 21}, {(8,6), 22}, {(7,6), 23}, {(6,6), 24},
+            {(6,7), 25}, {(6,8), 26}, {(6,9), 27}, {(6,10), 28}, {(5,10), 29},
+            {(4,10), 30}, {(4,9), 31}, {(4,8), 32}, {(4,7), 33}, {(4,6), 34},
+            {(3,6), 35}, {(2,6), 36}, {(1,6), 37}, {(0,6), 38}, {(0,5), 39}
+        };
 
         public GameFrontend(IWebSocketClient wsClient, Guid playerId)
         {
@@ -104,12 +119,16 @@ namespace MadnClient
             else if (x >= 5 && x <= 9 && y == 5) { bg = ConsoleColor.Red; fg = ConsoleColor.Red; }
             else if (x == 5 && y >= 5 && y <= 9) { bg = ConsoleColor.Blue; fg = ConsoleColor.DarkBlue; }
 
-            // TODO: get tile from board and check if occupied
-            // if (tile != null && tile.IsOccupied) 
-            // { 
-            //     symbol = "♙ "; 
-            //     fg = GetFigureColor(tile.OccupyingFigure.Color);
-            // }
+            TileDTO tile = GetTileFromBoard(x, y, board);
+            if (tile != null && tile.Type is TileType.Start)
+            {
+                bg = GetBackroundColor(tile.Color);
+            }
+            if (tile != null && tile.IsOccupied) 
+            { 
+                symbol = "♙ "; 
+                fg = GetFigureColor(tile.OccupyingFigure.Color);
+            }
 
             if (bg != ConsoleColor.Black) 
             {
@@ -125,7 +144,46 @@ namespace MadnClient
             Console.ResetColor();
             Console.Write(" ");
         }
-        
+
+        private TileDTO GetTileFromBoard(int x, int y, GameboardDTO board)
+        {
+            if (board == null) return null;
+
+            // 1. Check Homes
+            // calculate indices based on the coordinates
+            if (x <= 1 && y <= 1) return GetArrayItem(board.Homes, Color.Yellow, x + (y * 2));
+            if (x >= 9 && y <= 1) return GetArrayItem(board.Homes, Color.Green, (x - 9) + (y * 2));
+            if (x <= 1 && y >= 9) return GetArrayItem(board.Homes, Color.Blue, x + ((y - 9) * 2));
+            if (x >= 9 && y >= 9) return GetArrayItem(board.Homes, Color.Red, (x - 9) + ((y - 9) * 2));
+
+            // 2. Check Targets
+            // calculate indices based on the coordinates
+            if (y == 5 && x >= 1 && x <= 4) return GetArrayItem(board.Targets, Color.Yellow, x - 1);
+            if (x == 5 && y >= 1 && y <= 4) return GetArrayItem(board.Targets, Color.Green, y - 1);
+            if (y == 5 && x >= 6 && x <= 9) return GetArrayItem(board.Targets, Color.Red, 9 - x);
+            if (x == 5 && y >= 6 && y <= 9) return GetArrayItem(board.Targets, Color.Blue, 9 - y);
+
+            // 3. Check Path
+            if (_pathMap.TryGetValue((x, y), out int pathIndex) && pathIndex < board.Path.Length)
+                return board.Path[pathIndex];
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the tile from the specified dictionary based on color and index
+        /// </summary>
+        /// <param name="dict"></param>
+        /// <param name="c"></param>
+        /// <param name="index"></param>
+        /// <returns></returns>
+        private TileDTO GetArrayItem(Dictionary<Color, TileDTO[]> dict, Color c, int index)
+        {
+            if (dict != null && dict.TryGetValue(c, out var arr) && arr != null && index >= 0 && index < arr.Length)
+                return arr[index];
+            return null;
+        }
+
         private ConsoleColor GetFigureColor(Color color)
         {
             return color switch
@@ -135,6 +193,18 @@ namespace MadnClient
                 Color.Blue => ConsoleColor.DarkBlue,
                 Color.Red => ConsoleColor.DarkRed,
                 _ => ConsoleColor.Black
+            };
+        }
+
+        private ConsoleColor GetBackroundColor(Color color)
+        {
+            return color switch
+            {
+                Color.Yellow => ConsoleColor.Yellow,
+                Color.Green => ConsoleColor.Green,
+                Color.Blue => ConsoleColor.Blue,
+                Color.Red => ConsoleColor.Red,
+                _ => ConsoleColor.Gray
             };
         }
     }
