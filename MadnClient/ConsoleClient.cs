@@ -226,9 +226,6 @@ public class ConsoleClient
             case GameJoinedMessage joinResponse:
                 _joinGameTcs?.TrySetResult(joinResponse);
                 break;
-             default:
-                 Logger.LogWarning($"Unhandled message type: {message.GetType().Name}");
-                 break;
         }
     }
 

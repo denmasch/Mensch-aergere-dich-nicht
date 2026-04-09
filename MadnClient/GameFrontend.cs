@@ -13,6 +13,11 @@ namespace MadnClient
     {
         private readonly IWebSocketClient _wsClient;
         private readonly Guid _playerId;
+        private Guid _gameId;
+        private GameboardDTO _currentGameboard;
+        private bool _stay = true;
+        private TaskCompletionSource<DiceResultMessage> _diceTcs;
+        
         
         /// <summary>
         /// Predefined mapping of (x,y) coordinates to path indices for the 11x11 board.
@@ -33,28 +38,28 @@ namespace MadnClient
         {
             _wsClient = wsClient;
             _playerId = playerId;
+            _wsClient.MessageReceived += OnWsMessageReceived;
         }
 
         public async Task EnterGameAsync(Guid gameId)
         {
-            Console.Clear();
-            Console.WriteLine($"Spiel: {gameId}");
-            Console.WriteLine();
-            Console.WriteLine("Optionen:");
-            Console.WriteLine("B) Spiel verlassen");
-            Console.WriteLine("W) Würfeln");
-            Console.WriteLine("A/D) Figur auswählen");
-            Console.WriteLine("Enter) Figur bewegen");
+            _gameId = gameId;
             
-            bool stay = true;
-            while (stay)
+            ShowMenu();
+            
+            while (_stay)
             {
                 var key = Console.ReadKey(true);
                 switch (key.Key)
                 {
                     case ConsoleKey.B:
                         break;
+                    case ConsoleKey.S:
+                        await SendStartGameAsync();
+                        break;
                     case ConsoleKey.W:
+                        var response = await SendRollDiceAsync();
+                        // TODO: Show dice result and possible moves
                         break;
                     // Arrow Keys or A/D for piece selection
                     case ConsoleKey.A:
@@ -78,9 +83,76 @@ namespace MadnClient
             await Task.Delay(300);
         }
         
-        private void DrawGameBoard(GameboardDTO board)
+        private async Task SendMessageAsync(IMessage message)
+        {
+            try
+            {
+                await _wsClient.SendAsync(message);
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Cannot send message: " + ex.Message);
+            }
+        }
+        
+        private async Task<DiceResultMessage> SendRollDiceAsync()
+        {
+            try
+            {
+                _diceTcs = new TaskCompletionSource<DiceResultMessage>();
+                var rollDiceMessage = new RollDiceMessage()
+                {
+                    GameId = _gameId,
+                    PlayerId = _playerId
+                };
+
+                await SendMessageAsync(rollDiceMessage);
+                Logger.LogInfo($"Sent RollDice message");
+                return await _diceTcs.Task;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Exception when sending RollDice message: " + ex.Message);
+                return null;
+            }
+        }
+        
+        private async Task SendStartGameAsync()
+        {
+            try
+            {
+                var startGameMessage = new StartGameMessage()
+                {
+                    GameId = _gameId,
+                    PlayerId = _playerId
+                };
+
+                await SendMessageAsync(startGameMessage);
+                Logger.LogInfo($"Sent CreateGame message");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Exception when sending CreateGame message: " + ex.Message);
+            }
+        }
+
+        private void ShowMenu()
         {
             Console.Clear();
+            Console.WriteLine($"Spiel: {_gameId}");
+            Console.WriteLine();
+            Console.WriteLine("Optionen:");
+            Console.WriteLine("B) Spiel verlassen");
+            Console.WriteLine("S) Spiel starten");
+            Console.WriteLine("W) Würfeln");
+            Console.WriteLine("A/D) Figur auswählen");
+            Console.WriteLine("Enter) Figur bewegen");
+
+        }
+        
+        private void DrawGameBoard(GameboardDTO board)
+        {
+            Console.WriteLine();
             
             for (int y = 0; y < 11; y++)
             {
@@ -206,6 +278,41 @@ namespace MadnClient
                 Color.Red => ConsoleColor.DarkRed,
                 _ => ConsoleColor.Gray
             };
+        }
+        private void OnWsMessageReceived(IMessage message)
+        {
+            Logger.LogInfo($"Received message: {message}");
+            switch (message)
+            {
+                case DiceResultMessage diceMsg:
+                    Logger.LogInfo($"Dice rolled: {diceMsg.Value}");
+                    _diceTcs?.TrySetResult(diceMsg);
+                    break;
+                case GameboardUpdatedMessage boardMsg:
+                    _currentGameboard = boardMsg.Gameboard;
+                    ShowMenu();
+                    DrawGameBoard(_currentGameboard);
+                    break;
+                case GameCreatedMessage createdMsg:
+                    Logger.LogInfo($"Game created with ID: {createdMsg.GameId}");
+                    _currentGameboard = createdMsg.Gameboard;
+                    ShowMenu();
+                    DrawGameBoard(_currentGameboard);
+                    break;
+                case GameJoinedMessage joinedMsg:
+                    Logger.LogInfo($"Joined game with ID: {joinedMsg.GameId}");
+                    _currentGameboard = joinedMsg.Gameboard;
+                    ShowMenu();
+                    DrawGameBoard(_currentGameboard);
+                    break;
+                case GameLeftMessage leftMsg:
+                    Logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
+                    _stay = false;
+                    break;
+                case NextPlayerMessage nextMsg:
+                    Logger.LogInfo($"Next player: {nextMsg.NextPlayerId}");
+                    break;
+            }
         }
     }
 }
