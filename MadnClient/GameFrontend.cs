@@ -100,10 +100,10 @@ namespace MadnClient
             string symbol = "  ";
 
             // The Homes 
-            if (x <= 1 && y <= 1) { bg = ConsoleColor.Yellow; fg = ConsoleColor.DarkYellow; } // top left
-            else if (x >= 9 && y <= 1) { bg = ConsoleColor.Green; fg = ConsoleColor.DarkGreen; } // top right
-            else if (x <= 1 && y >= 9) { bg = ConsoleColor.Blue; fg = ConsoleColor.DarkBlue; } // bottom left
-            else if (x >= 9 && y >= 9) { bg = ConsoleColor.Red; fg = ConsoleColor.DarkRed; } // bottom right
+            if (x <= 1 && y <= 1) { bg = ConsoleColor.DarkYellow; fg = ConsoleColor.Yellow; } // top left
+            else if (x >= 9 && y <= 1) { bg = ConsoleColor.DarkGreen; fg = ConsoleColor.Green; } // top right
+            else if (x <= 1 && y >= 9) { bg = ConsoleColor.DarkBlue; fg = ConsoleColor.Blue; } // bottom left
+            else if (x >= 9 && y >= 9) { bg = ConsoleColor.DarkRed; fg = ConsoleColor.Red; } // bottom right
             
             // The Path
             else if ((x >= 4 && x <= 6) || (y >= 4 && y <= 6)) 
@@ -114,10 +114,10 @@ namespace MadnClient
             
             // Get Target Tile
             if (x == 5 && y == 5) { bg = ConsoleColor.Black; fg = ConsoleColor.White; }
-            else if (x >= 1 && x <= 5 && y == 5) { bg = ConsoleColor.Yellow; fg = ConsoleColor.DarkYellow; }
-            else if (x == 5 && y >= 1 && y <= 5 ) { bg = ConsoleColor.Green; fg = ConsoleColor.DarkGreen; }
-            else if (x >= 5 && x <= 9 && y == 5) { bg = ConsoleColor.Red; fg = ConsoleColor.Red; }
-            else if (x == 5 && y >= 5 && y <= 9) { bg = ConsoleColor.Blue; fg = ConsoleColor.DarkBlue; }
+            else if (x >= 1 && x <= 5 && y == 5) { bg = ConsoleColor.DarkYellow; fg = ConsoleColor.Yellow; }
+            else if (x == 5 && y >= 1 && y <= 5 ) { bg = ConsoleColor.DarkGreen; fg = ConsoleColor.Green; }
+            else if (x >= 5 && x <= 9 && y == 5) { bg = ConsoleColor.DarkRed; fg = ConsoleColor.Red; }
+            else if (x == 5 && y >= 5 && y <= 9) { bg = ConsoleColor.DarkBlue; fg = ConsoleColor.Blue; }
 
             TileDTO tile = GetTileFromBoard(x, y, board);
             if (tile != null && tile.Type is TileType.Start)
@@ -126,7 +126,7 @@ namespace MadnClient
             }
             if (tile != null && tile.IsOccupied) 
             { 
-                symbol = "♙ "; 
+                symbol = "♟ "; 
                 fg = GetFigureColor(tile.OccupyingFigure.Color);
             }
 
@@ -188,10 +188,10 @@ namespace MadnClient
         {
             return color switch
             {
-                Color.Yellow => ConsoleColor.DarkYellow,
-                Color.Green => ConsoleColor.DarkGreen,
-                Color.Blue => ConsoleColor.DarkBlue,
-                Color.Red => ConsoleColor.DarkRed,
+                Color.Yellow => ConsoleColor.Yellow,
+                Color.Green => ConsoleColor.Green,
+                Color.Blue => ConsoleColor.Blue,
+                Color.Red => ConsoleColor.Red,
                 _ => ConsoleColor.Black
             };
         }
@@ -200,10 +200,10 @@ namespace MadnClient
         {
             return color switch
             {
-                Color.Yellow => ConsoleColor.Yellow,
-                Color.Green => ConsoleColor.Green,
-                Color.Blue => ConsoleColor.Blue,
-                Color.Red => ConsoleColor.Red,
+                Color.Yellow => ConsoleColor.DarkYellow,
+                Color.Green => ConsoleColor.DarkGreen,
+                Color.Blue => ConsoleColor.DarkBlue,
+                Color.Red => ConsoleColor.DarkRed,
                 _ => ConsoleColor.Gray
             };
         }
