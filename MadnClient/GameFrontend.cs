@@ -13,6 +13,7 @@ namespace MadnClient
     {
         private readonly IWebSocketClient _wsClient;
         private readonly Guid _playerId;
+        private Guid _currentPlayerId;
         private Guid _gameId;
         private GameboardDTO _currentGameboard;
         private bool _stay = true;
@@ -311,6 +312,10 @@ namespace MadnClient
                     break;
                 case NextPlayerMessage nextMsg:
                     Logger.LogInfo($"Next player: {nextMsg.NextPlayerId}");
+                    _currentPlayerId = nextMsg.NextPlayerId;
+                    if (nextMsg.NextPlayerId != _playerId)
+                        return;
+                    Logger.LogInfo("Your turn");
                     break;
             }
         }
