@@ -83,6 +83,10 @@ public class Game
                 {
                     StartGame();
                 }
+                else
+                {
+                    Logger.LogInfo($"Player {fromPlayer.Id} is not allowed to start game {Id}.");
+                }
                 break;
             case RollDiceMessage rollDice:
                 Logger.LogInfo($"Player {fromPlayer.Id} requested to roll dice in game {Id}.");
@@ -157,11 +161,18 @@ public class Game
     private void HandleRollDice(IPlayer fromPlayer, RollDiceMessage msg)
     {
         if (!IsCurrentPlayer(fromPlayer))
+        {
+            Logger.LogInfo($"Player {fromPlayer.Id} attempted to roll dice out of turn in game {Id}.");
             return;
+        } 
 
         var diceValue = Dice.RollDice();
-
+        
+        Logger.LogInfo($"Player {fromPlayer.Id} rolled a {diceValue} in game {Id}.");
+            
         var validMoves = Gameboard.GetValidMoves(fromPlayer.Color, diceValue);
+        
+        Logger.LogInfo($"Player {fromPlayer.Id} has {validMoves.Count} valid moves.");
         
         fromPlayer.SendAsync(new DiceResultMessage
         {
