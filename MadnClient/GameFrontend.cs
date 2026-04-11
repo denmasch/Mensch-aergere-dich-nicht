@@ -445,10 +445,35 @@ namespace MadnClient
                     }
                 }
                 else
-                { 
+                {
                     // The Figure is in Homes or Targets
                     var tileAtStart = GetTileFromBoard(start.Value.x, start.Value.y, _currentGameboard);
-                    if (tileAtStart.IsOccupied && tileAtStart.Type != TileType.Home)
+                    if (tileAtStart == null || !tileAtStart.IsOccupied)
+                        return;
+
+                    if (tileAtStart.Type == TileType.Target)
+                    {
+                        var figColor = tileAtStart.OccupyingFigure.Color;
+                        if (_currentGameboard.Targets != null && _currentGameboard.Targets.TryGetValue(figColor, out var targetArr) && targetArr != null)
+                        {
+                            int currentIndex = Array.IndexOf(targetArr, tileAtStart);
+                            if (currentIndex >= 0)
+                            {
+                                int desiredIndex = currentIndex + selected.Steps;
+
+                                if (desiredIndex >= 0 && desiredIndex < targetArr.Length)
+                                {
+                                    var targetTile = targetArr[desiredIndex];
+                                    var coord = FindCoordinatesByTileReference(_currentGameboard, targetTile);
+                                    if (coord.HasValue)
+                                    {
+                                        _highlightTarget = coord.Value;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    else if (tileAtStart.Type == TileType.Home)
                     {
                         var figColor = tileAtStart.OccupyingFigure.Color;
                         for (int i = 0; i < _currentGameboard.Path.Length; i++)
@@ -463,10 +488,6 @@ namespace MadnClient
                                 break;
                             }
                         }
-                    }
-                    else if (tileAtStart.IsOccupied && tileAtStart.Type != TileType.Target)
-                    {
-                        
                     }
                 }
             }
