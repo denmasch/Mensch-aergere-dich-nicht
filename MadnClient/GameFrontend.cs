@@ -435,14 +435,49 @@ namespace MadnClient
                 if (_pathMap.TryGetValue((start.Value.x, start.Value.y), out int startPathIndex))
                 {
                     // The Figure is on the Path
-                    if (_currentGameboard?.Path != null && _currentGameboard.Path.Length > 0)
+                    var path = _currentGameboard.Path;
+                    TileDTO startTile = path[startPathIndex];
+                    var figColor = startTile.OccupyingFigure.Color;
+
+                    bool enteredTarget = false;
+                    int pathIndex = startPathIndex;
+
+                    for (int step = 1; step <= selected.Steps; step++)
                     {
-                        int targetIndex = (startPathIndex + selected.Steps) % _currentGameboard.Path.Length;
-                        if (_indexToCoord.TryGetValue(targetIndex, out var coord))
+                        pathIndex = (pathIndex + 1) % path.Length;
+                        var pTile = path[pathIndex];
+                        
+                        // if figure enters targets, highlight Targets
+                        if (pTile != null && pTile.Type == TileType.Start && pTile.Color == figColor)
+                        {
+                            int remaining = selected.Steps - step;
+                            if (_currentGameboard.Targets != null && _currentGameboard.Targets.TryGetValue(figColor, out var targetArr) && targetArr != null)
+                            {
+                                if (remaining >= 0 && remaining < targetArr.Length)
+                                {
+                                    var targetTile = targetArr[remaining];
+                                    var coord = FindCoordinatesByTileReference(_currentGameboard, targetTile);
+                                    if (coord.HasValue)
+                                    {
+                                        _highlightTarget = coord.Value;
+                                    }
+                                }
+                            }
+                            enteredTarget = true;
+                            break;
+                        }
+                    }
+
+                    if (!enteredTarget)
+                    {
+                        // no enter into targets -> normal path landing
+                        int finalIndex = (startPathIndex + selected.Steps) % path.Length;
+                        if (_indexToCoord.TryGetValue(finalIndex, out var coord))
                         {
                             _highlightTarget = coord;
                         }
                     }
+                
                 }
                 else
                 {
