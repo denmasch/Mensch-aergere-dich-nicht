@@ -19,7 +19,7 @@ namespace MadnClient
         private bool _stay = true;
         private TaskCompletionSource<DiceResultMessage> _diceTcs;
         
-        
+
         /// <summary>
         /// Predefined mapping of (x,y) coordinates to path indices for the 11x11 board.
         /// </summary>
@@ -34,6 +34,21 @@ namespace MadnClient
             {(4,10), 30}, {(4,9), 31}, {(4,8), 32}, {(4,7), 33}, {(4,6), 34},
             {(3,6), 35}, {(2,6), 36}, {(1,6), 37}, {(0,6), 38}, {(0,5), 39}
         };
+        /// <summary>
+        /// reverse map pathIndex -> (x,y)
+        /// </summary>
+        private static readonly Dictionary<int, (int x, int y)> _indexToCoord;
+
+        private List<Move> _currentValidMoves;
+        private int _selectedMoveIndex = 0;
+        private (int x, int y)? _highlightStart;
+        private (int x, int y)? _highlightTarget;
+
+        static GameFrontend()
+        {
+            // reverse the map
+            _indexToCoord = _pathMap.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
+        }
 
         public GameFrontend(IWebSocketClient wsClient, Guid playerId)
         {
@@ -60,7 +75,14 @@ namespace MadnClient
                         break;
                     case ConsoleKey.W:
                         var response = await SendRollDiceAsync();
-                        // TODO: Show dice result and possible moves
+                        if (response != null && response.ValidMoves != null && response.ValidMoves.Count > 0)
+                        {
+                            await PromptSelectMoveAsync(response);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Keine gültigen Züge vorhanden.");
+                        }
                         break;
                     // Arrow Keys or A/D for piece selection
                     case ConsoleKey.A:
@@ -71,7 +93,7 @@ namespace MadnClient
                         break;
                         
                     case ConsoleKey.Enter:
-                        
+
                     default:
                         Console.WriteLine("Unbekannte Option. 'B' zum Zurückkehren.");
                         break;
@@ -203,6 +225,16 @@ namespace MadnClient
                 fg = GetFigureColor(tile.OccupyingFigure.Color);
             }
 
+            // Highlight start/target of selected move
+            if (_highlightStart.HasValue && _highlightStart.Value.x == x && _highlightStart.Value.y == y)
+            {
+                bg = ConsoleColor.White;
+            }
+            else if (_highlightTarget.HasValue && _highlightTarget.Value.x == x && _highlightTarget.Value.y == y)
+            {
+                bg = ConsoleColor.White;
+            }
+
             if (bg != ConsoleColor.Black) 
             {
                 Console.BackgroundColor = bg;
@@ -318,6 +350,176 @@ namespace MadnClient
                     Logger.LogInfo("Your turn");
                     break;
             }
+        }
+
+        /// <summary>
+        /// Prompts the player to select one of the valid moves using A/D or arrow keys.
+        /// Enter confirms the currently selected move and sends it to server.
+        /// </summary>
+        private async Task PromptSelectMoveAsync(DiceResultMessage dice)
+        {
+            _currentValidMoves = dice.ValidMoves;
+            if (_currentValidMoves.Count == 0) 
+                return;
+            _selectedMoveIndex = 0;
+            ComputeHighlights(); 
+
+            bool selecting = true;
+            while (selecting)
+            {
+                Console.Clear();
+                ShowMenu();
+                // draw board with current highlights
+                DrawGameBoard(_currentGameboard);
+
+                var key = Console.ReadKey(true);
+                switch (key.Key)
+                {
+                    case ConsoleKey.A:
+                    case ConsoleKey.LeftArrow:
+                        _selectedMoveIndex = (_selectedMoveIndex - 1 + _currentValidMoves.Count) % _currentValidMoves.Count;
+                        ComputeHighlights();
+                        break;
+                    case ConsoleKey.D:
+                    case ConsoleKey.RightArrow:
+                        _selectedMoveIndex = (_selectedMoveIndex + 1) % _currentValidMoves.Count;
+                        ComputeHighlights();
+                        break;
+                    case ConsoleKey.Enter:
+                        var chosen = _currentValidMoves[_selectedMoveIndex];
+                        var moveFigure = new MoveFigureMessage()
+                        {
+                            GameId = _gameId,
+                            PlayerId = _playerId,
+                            FigureId = chosen.FigureIndex,
+                            DiceRoll = chosen.Steps
+                        };
+                        await SendMessageAsync(moveFigure);
+                        selecting = false;
+                        _currentValidMoves = null;
+                        _highlightStart = null;
+                        _highlightTarget = null;
+                        break;
+                    case ConsoleKey.Escape:
+                    case ConsoleKey.B:
+                        selecting = false;
+                        _currentValidMoves = null;
+                        _highlightStart = null;
+                        _highlightTarget = null;
+                        break;
+                }
+                await Task.Delay(50);
+            }
+        }
+
+        /// <summary>
+        /// Compute highlight coordinates for current selected move.
+        /// Uses reflection to identify figure indices on tiles and the path reverse-map to compute target.
+        /// </summary>
+        private void ComputeHighlights()
+        {
+            _highlightStart = null;
+            _highlightTarget = null;
+            if (_currentValidMoves == null || _currentValidMoves.Count == 0 || _currentGameboard == null) 
+                return;
+
+            var selected = _currentValidMoves[_selectedMoveIndex];
+
+            
+            (int x, int y)? start = FindTileCoordinatesForFigureIndex(_currentGameboard, selected.FigureIndex);
+            if (start.HasValue)
+            {
+                _highlightStart = start.Value; 
+                if (!_pathMap.TryGetValue((start.Value.x, start.Value.y),out int startPathIndex))
+                {
+                    // The figure is not on the path, it must be in home or target
+
+                }
+                else
+                {
+                    int targetIndex = (startPathIndex + selected.Steps) % _currentGameboard.Path.Length;
+                    if (_indexToCoord.TryGetValue(targetIndex, out var coord))
+                    {
+                        _highlightTarget = coord;
+                    }
+                }
+            }
+        }
+
+        /// <summary>
+        /// Tries to find the coordinates of the tile that contains a figure with the given figureIndex.
+        /// </summary>
+        private (int x, int y)? FindTileCoordinatesForFigureIndex(GameboardDTO board, int figureIndex)
+        {
+            if (board == null)
+                return null;
+
+            // Search Homes
+            foreach (var kv in board.Homes)
+            {
+                var arr = kv.Value;
+                if (arr != null)
+                {
+                    for (int i = 0; i < arr.Length; i++)
+                    {
+                        var t = arr[i];
+                        if (t != null && t.IsOccupied && t.OccupyingFigure.Id == figureIndex)
+                        {
+                            var coord = FindCoordinatesByTileReference(board, t);
+                            if (coord.HasValue) return coord;
+                        }
+                    }
+                }
+            }
+
+            // search Targets
+            foreach (var kv in board.Targets)
+            {
+                var arr = kv.Value;
+                if (arr != null)
+                {
+                    for (int i = 0; i < arr.Length; i++)
+                    {
+                        var t = arr[i];
+                        if (t != null && t.IsOccupied && t.OccupyingFigure.Id == figureIndex)
+                        {
+                            var coord = FindCoordinatesByTileReference(board, t);
+                            if (coord.HasValue) return coord;
+                        }
+                    }
+                }
+            }
+
+            // search Path
+            if (board.Path != null)
+            {
+                for (int i = 0; i < board.Path.Length; i++)
+                {
+                    var t = board.Path[i];
+                    if (t != null && t.IsOccupied && t.OccupyingFigure.Id == figureIndex)
+                    {
+                        if (_indexToCoord.TryGetValue(i, out var coord)) return coord;
+                        var coord2 = FindCoordinatesByTileReference(board, t);
+                        if (coord2.HasValue) return coord2;
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        private (int x, int y)? FindCoordinatesByTileReference(GameboardDTO board, TileDTO tile)
+        {
+            if (tile == null) return null;
+            for (int y = 0; y < 11; y++)
+            {
+                for (int x = 0; x < 11; x++)
+                {
+                    var t = GetTileFromBoard(x, y, board);
+                    if (ReferenceEquals(t, tile)) return (x, y);
+                }
+            }
+            return null;
         }
     }
 }
