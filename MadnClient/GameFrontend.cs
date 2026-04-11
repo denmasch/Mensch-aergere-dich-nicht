@@ -429,18 +429,44 @@ namespace MadnClient
             (int x, int y)? start = FindTileCoordinatesForFigureIndex(_currentGameboard, selected.FigureIndex);
             if (start.HasValue)
             {
-                _highlightStart = start.Value; 
-                if (!_pathMap.TryGetValue((start.Value.x, start.Value.y),out int startPathIndex))
-                {
-                    // The figure is not on the path, it must be in home or target
+                _highlightStart = start.Value;
 
+
+                if (_pathMap.TryGetValue((start.Value.x, start.Value.y), out int startPathIndex))
+                {
+                    // The Figure is on the Path
+                    if (_currentGameboard?.Path != null && _currentGameboard.Path.Length > 0)
+                    {
+                        int targetIndex = (startPathIndex + selected.Steps) % _currentGameboard.Path.Length;
+                        if (_indexToCoord.TryGetValue(targetIndex, out var coord))
+                        {
+                            _highlightTarget = coord;
+                        }
+                    }
                 }
                 else
-                {
-                    int targetIndex = (startPathIndex + selected.Steps) % _currentGameboard.Path.Length;
-                    if (_indexToCoord.TryGetValue(targetIndex, out var coord))
+                { 
+                    // The Figure is in Homes or Targets
+                    var tileAtStart = GetTileFromBoard(start.Value.x, start.Value.y, _currentGameboard);
+                    if (tileAtStart.IsOccupied && tileAtStart.Type != TileType.Home)
                     {
-                        _highlightTarget = coord;
+                        var figColor = tileAtStart.OccupyingFigure.Color;
+                        for (int i = 0; i < _currentGameboard.Path.Length; i++)
+                        {
+                            var t = _currentGameboard.Path[i];
+                            if (t.Type == TileType.Start && t.Color == figColor)
+                            {
+                                if (_indexToCoord.TryGetValue(i, out var startCoord))
+                                {
+                                    _highlightTarget = startCoord;
+                                }
+                                break;
+                            }
+                        }
+                    }
+                    else if (tileAtStart.IsOccupied && tileAtStart.Type != TileType.Target)
+                    {
+                        
                     }
                 }
             }
