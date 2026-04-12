@@ -16,8 +16,8 @@ namespace MadnClient
         private Guid _currentPlayerId;
         private Guid _gameId;
         private GameboardDTO _currentGameboard;
-        private bool _stay = true;
         private TaskCompletionSource<DiceResultMessage> _diceTcs;
+        private TaskCompletionSource<GameLeftMessage> _leaveTcs;
         
 
         /// <summary>
@@ -62,13 +62,18 @@ namespace MadnClient
             _gameId = gameId;
             
             ShowMenu();
-            
-            while (_stay)
+            bool stay = true;
+            while (stay)
             {
                 var key = Console.ReadKey(true);
                 switch (key.Key)
                 {
                     case ConsoleKey.B:
+                        var res = await SendLeaveAsync();
+                        if (res != null && res.PlayerId == _playerId)
+                        {
+                            stay = false;
+                        }
                         break;
                     case ConsoleKey.S:
                         await SendStartGameAsync();
@@ -115,6 +120,28 @@ namespace MadnClient
             catch (Exception ex)
             {
                 Logger.LogError("Cannot send message: " + ex.Message);
+            }
+        }
+
+        private async Task<GameLeftMessage> SendLeaveAsync()
+        {
+            try
+            {
+                _leaveTcs = new TaskCompletionSource<GameLeftMessage>();
+                var leaveGameMessage = new LeaveGameMessage()
+                {
+                    GameId = _gameId,
+                    PlayerId = _playerId
+                };
+
+                await SendMessageAsync(leaveGameMessage);
+                Logger.LogInfo($"Sent Leave message");
+                return await _leaveTcs.Task;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Exception when sending LeaveGame message: " + ex.Message);
+                return null;
             }
         }
         
@@ -228,11 +255,11 @@ namespace MadnClient
             // Highlight start/target of selected move
             if (_highlightStart.HasValue && _highlightStart.Value.x == x && _highlightStart.Value.y == y)
             {
-                bg = ConsoleColor.White;
+                bg = ConsoleColor.DarkGray;
             }
             else if (_highlightTarget.HasValue && _highlightTarget.Value.x == x && _highlightTarget.Value.y == y)
             {
-                bg = ConsoleColor.White;
+                bg = ConsoleColor.DarkGray;
             }
 
             if (bg != ConsoleColor.Black) 
@@ -340,7 +367,7 @@ namespace MadnClient
                     break;
                 case GameLeftMessage leftMsg:
                     Logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
-                    _stay = false;
+                    _leaveTcs?.TrySetResult(leftMsg);
                     break;
                 case NextPlayerMessage nextMsg:
                     Logger.LogInfo($"Next player: {nextMsg.NextPlayerId}");

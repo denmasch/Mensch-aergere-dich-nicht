@@ -204,6 +204,12 @@ public class Game
 
     private void HandleLeaveGame(IPlayer fromPlayer, LeaveGameMessage msg)
     {
+        Broadcast(new GameLeftMessage
+        {
+            GameId = Id,
+            PlayerId = fromPlayer.Id
+        });
+        
         Players.Remove(fromPlayer);
         
         if (Players.Count == 0)
@@ -212,11 +218,6 @@ public class Game
             GameManager.RemoveGame(Id);
         }
 
-        Broadcast(new GameLeftMessage
-        {
-            GameId = Id,
-            PlayerId = fromPlayer.Id
-        });
         Logger.LogInfo($"Player {fromPlayer.Id} left. {Players.Count} players remaining.");
     }
 

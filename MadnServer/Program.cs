@@ -9,6 +9,7 @@ using MadnServer.Player;
 using MadnShared.Logger;
 using MadnShared.Messages.Base;
 using MadnShared.Utils;
+using MadnShared.Messages.ServerToClient; 
 
 namespace MadnServer;
 
@@ -32,6 +33,17 @@ class Program
                 Logger.LogInfo("Client connected");
                 
                 IPlayer player = new RealPlayer(webSocket);
+
+                try
+                {
+                    var welcome = new WelcomeMessage { ClientId = player.Id };
+                    await player.SendAsync(welcome);
+                    Logger.LogInfo($"Sent WelcomeMessage to client {player.Id}");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Failed to send WelcomeMessage to client {player.Id}: {ex.Message}");
+                }
 
                 var buffer = new byte[1024 * 4];
                 using var ms = new MemoryStream();
