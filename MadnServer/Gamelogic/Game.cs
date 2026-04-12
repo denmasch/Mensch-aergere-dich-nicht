@@ -25,11 +25,11 @@ public class Game
 
     public Game(List<IPlayer> players)
     {
+        Players = players;
         foreach (var player in players)
         {
             player.Color = GetFirstUnusedColor();
         }
-        Players = players;
         Gameboard = new Gameboard();
     }
     
