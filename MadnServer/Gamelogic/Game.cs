@@ -25,6 +25,10 @@ public class Game
 
     public Game(List<IPlayer> players)
     {
+        foreach (var player in players)
+        {
+            player.Color = GetFirstUnusedColor();
+        }
         Players = players;
         Gameboard = new Gameboard();
     }
@@ -37,16 +41,21 @@ public class Game
             Logger.LogInfo($"Game {Id} is already started or is full. Player cannot join.");
             return false;
         }
+
+        player.Color = GetFirstUnusedColor();
+        Players.Add(player);
+        Logger.LogInfo($"{player.Color} player joined game {Id}.");
+        return true;
+    }
+
+    private Color GetFirstUnusedColor()
+    {
         var allColors = Enum.GetValues(typeof(Color)).Cast<Color>().ToList();
 
         var usedColors = Players.Select(p => p.Color);
 
         var freeColor = allColors.FirstOrDefault(c => !usedColors.Contains(c));
-        
-        player.Color = freeColor;
-        Players.Add(player);
-        Logger.LogInfo($"{player.Color} player joined game {Id}.");
-        return true;
+        return freeColor;
     }
 
     private void StartGame()

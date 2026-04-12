@@ -53,11 +53,11 @@ public static class MessageDispatcher
         {
             case CreateGameMessage createGameMessage:
                 game = GameManager.CreateGame(fromPlayer);
-                fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id , Gameboard = game.Gameboard.ToDto() });
+                fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id , Gameboard = game.Gameboard.ToDto(), Color = fromPlayer.Color });
                 break;
             case JoinGameMessage joinGameMessage:
                 game = GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
-                fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId , Gameboard = game.Gameboard.ToDto()});
+                fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId , Gameboard = game.Gameboard.ToDto(), Color = fromPlayer.Color });
                 break;
             case ListGamesMessage listGamesMessage:
                 var games = GameManager.GetAllGames();

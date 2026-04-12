@@ -13,8 +13,11 @@ namespace MadnClient
     {
         private readonly IWebSocketClient _wsClient;
         private readonly Guid _playerId;
-        private Guid _currentPlayerId;
         private Guid _gameId;
+        private Color _currentTurnColor;
+        private Color _yourColor;
+        private int _currentTurnDice;
+        private bool _isGameStarted = false;
         private GameboardDTO _currentGameboard;
         private TaskCompletionSource<DiceResultMessage> _diceTcs;
         private TaskCompletionSource<GameLeftMessage> _leaveTcs;
@@ -86,6 +89,7 @@ namespace MadnClient
                         }
                         else
                         {
+                            ShowMenu();
                             Console.WriteLine("Keine gültigen Züge vorhanden.");
                         }
                         break;
@@ -190,6 +194,10 @@ namespace MadnClient
         {
             Console.Clear();
             Console.WriteLine($"Spiel: {_gameId}");
+            Console.WriteLine($"Deine Farbe: {YourColor()}");
+            Console.WriteLine($"Status: {Status()} ");
+            Console.WriteLine($"Würfel: {DiceRoll()}");
+            DrawGameBoard(_currentGameboard);
             Console.WriteLine();
             Console.WriteLine("Optionen:");
             Console.WriteLine("B) Spiel verlassen");
@@ -197,7 +205,58 @@ namespace MadnClient
             Console.WriteLine("W) Würfeln");
             Console.WriteLine("A/D) Figur auswählen");
             Console.WriteLine("Enter) Figur bewegen");
+        }
 
+        private string Status()
+        {
+            if (_isGameStarted ==  false)
+                return "Warte auf Spielstart";
+
+            string status = $"Farbe am Zug: {CurrentColor()}";
+            if (_currentTurnColor == _yourColor)
+                status += " (Du bist am Zug)";
+            else 
+                status += " (Der Gegner ist am Zug)";
+            
+            return status;
+        }
+        
+        private string CurrentColor()
+        {
+            switch (_currentTurnColor)
+            {
+                case Color.Yellow: return "Gelb";
+                case Color.Green: return "Grün";
+                case Color.Blue: return "Blau";
+                case Color.Red: return "Rot";
+            }
+            return "";
+        }
+
+        private string YourColor()
+        {
+            switch (_yourColor)
+            {
+                case Color.Yellow: return "Gelb";
+                case Color.Green: return "Grün";
+                case Color.Blue: return "Blau";
+                case Color.Red: return "Rot";
+            }
+            return "";
+        }
+        
+        private string DiceRoll()
+        {
+            switch (_currentTurnDice)
+             {
+                 case 1: return "⚀ (1)";
+                 case 2: return "⚁ (2)";
+                 case 3: return "⚂ (3)";
+                 case 4: return "⚃ (4)";
+                 case 5: return "⚄ (5)";
+                 case 6: return "⚅ (6)";
+                 default: return "-";
+             }
         }
         
         private void DrawGameBoard(GameboardDTO board)
@@ -346,24 +405,24 @@ namespace MadnClient
             {
                 case DiceResultMessage diceMsg:
                     Logger.LogInfo($"Dice rolled: {diceMsg.Value}");
+                    _currentTurnDice = diceMsg.Value;
                     _diceTcs?.TrySetResult(diceMsg);
                     break;
                 case GameboardUpdatedMessage boardMsg:
                     _currentGameboard = boardMsg.Gameboard;
                     ShowMenu();
-                    DrawGameBoard(_currentGameboard);
                     break;
                 case GameCreatedMessage createdMsg:
                     Logger.LogInfo($"Game created with ID: {createdMsg.GameId}");
                     _currentGameboard = createdMsg.Gameboard;
+                    _yourColor  = createdMsg.Color;
                     ShowMenu();
-                    DrawGameBoard(_currentGameboard);
                     break;
                 case GameJoinedMessage joinedMsg:
                     Logger.LogInfo($"Joined game with ID: {joinedMsg.GameId}");
                     _currentGameboard = joinedMsg.Gameboard;
+                    _yourColor = joinedMsg.Color;
                     ShowMenu();
-                    DrawGameBoard(_currentGameboard);
                     break;
                 case GameLeftMessage leftMsg:
                     Logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
@@ -371,7 +430,9 @@ namespace MadnClient
                     break;
                 case NextPlayerMessage nextMsg:
                     Logger.LogInfo($"Next player: {nextMsg.NextPlayerId}");
-                    _currentPlayerId = nextMsg.NextPlayerId;
+                    _isGameStarted = true;
+                    _currentTurnColor = nextMsg.NextPlayerColor;
+                    ShowMenu();
                     if (nextMsg.NextPlayerId != _playerId)
                         return;
                     Logger.LogInfo("Your turn");
@@ -396,8 +457,6 @@ namespace MadnClient
             {
                 Console.Clear();
                 ShowMenu();
-                // draw board with current highlights
-                DrawGameBoard(_currentGameboard);
 
                 var key = Console.ReadKey(true);
                 switch (key.Key)
