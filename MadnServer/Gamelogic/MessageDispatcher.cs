@@ -1,5 +1,6 @@
 using System;
 using MadnServer.Player;
+using MadnShared.Enums;
 using MadnShared.Logger;
 using MadnShared.Messages.Base;
 using MadnShared.Messages.ClientToServer;
@@ -49,15 +50,18 @@ public static class MessageDispatcher
         Logger.LogInfo($"Handling lobby message of type {typeName} from player {fromPlayer.Id}");
         
         Game game;
+        Color color;
         switch (lobbyMessage)
         {
             case CreateGameMessage createGameMessage:
                 game = GameManager.CreateGame(fromPlayer);
-                fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id , Gameboard = game.Gameboard.ToDto(), Color = fromPlayer.Color });
+                color = game.Players.Find(p => p.Id == fromPlayer.Id).Color;
+                fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id , Gameboard = game.Gameboard.ToDto(), Color = color });
                 break;
             case JoinGameMessage joinGameMessage:
                 game = GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
-                fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId , Gameboard = game.Gameboard.ToDto(), Color = fromPlayer.Color });
+                color = game.Players.Find(p => p.Id == fromPlayer.Id).Color;
+                fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId , Gameboard = game.Gameboard.ToDto(), Color = color });
                 break;
             case ListGamesMessage listGamesMessage:
                 var games = GameManager.GetAllGames();

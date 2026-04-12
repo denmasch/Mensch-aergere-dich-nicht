@@ -21,7 +21,8 @@ namespace MadnClient
         private GameboardDTO _currentGameboard;
         private TaskCompletionSource<DiceResultMessage> _diceTcs;
         private TaskCompletionSource<GameLeftMessage> _leaveTcs;
-        
+        private GameState _gameState;
+        private bool _needsRedraw = true;
 
         /// <summary>
         /// Predefined mapping of (x,y) coordinates to path indices for the 11x11 board.
@@ -53,10 +54,12 @@ namespace MadnClient
             _indexToCoord = _pathMap.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
         }
 
-        public GameFrontend(IWebSocketClient wsClient, Guid playerId)
+        public GameFrontend(IWebSocketClient wsClient, Guid playerId, Color yourColor, GameboardDTO initialBoard)
         {
             _wsClient = wsClient;
             _playerId = playerId;
+            _yourColor = yourColor;
+            _currentGameboard = initialBoard;
             _wsClient.MessageReceived += OnWsMessageReceived;
         }
 
@@ -64,49 +67,55 @@ namespace MadnClient
         {
             _gameId = gameId;
             
-            ShowMenu();
             bool stay = true;
             while (stay)
             {
-                var key = Console.ReadKey(true);
-                switch (key.Key)
+                if (_needsRedraw)
                 {
-                    case ConsoleKey.B:
-                        var res = await SendLeaveAsync();
-                        if (res != null && res.PlayerId == _playerId)
-                        {
-                            stay = false;
-                        }
-                        break;
-                    case ConsoleKey.S:
-                        await SendStartGameAsync();
-                        break;
-                    case ConsoleKey.W:
-                        var response = await SendRollDiceAsync();
-                        if (response != null && response.ValidMoves != null && response.ValidMoves.Count > 0)
-                        {
-                            await PromptSelectMoveAsync(response);
-                        }
-                        else
-                        {
-                            ShowMenu();
-                            Console.WriteLine("Keine gültigen Züge vorhanden.");
-                        }
-                        break;
-                    // Arrow Keys or A/D for piece selection
-                    case ConsoleKey.A:
-                    case ConsoleKey.LeftArrow: 
-                        break;
-                    case ConsoleKey.D:  
-                    case ConsoleKey.RightArrow:
-                        break;
-                        
-                    case ConsoleKey.Enter:
-
-                    default:
-                        Console.WriteLine("Unbekannte Option. 'B' zum Zurückkehren.");
-                        break;
+                    ShowMenu();
+                    _needsRedraw = false;
                 }
+
+                if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(true);
+                    switch (key.Key)
+                    {
+                        case ConsoleKey.B:
+                            var res = await SendLeaveAsync();
+                            if (res != null && res.PlayerId == _playerId)
+                            {
+                                stay = false;
+                            }
+
+                            break;
+                        case ConsoleKey.S:
+                            if (_gameState != GameState.WaitingForStart)
+                                break;
+                            await SendStartGameAsync();
+                            break;
+                        case ConsoleKey.W:
+                            if (_gameState != GameState.RollDice)
+                                break;
+
+                            var response = await SendRollDiceAsync();
+                            if (response != null && response.ValidMoves != null && response.ValidMoves.Count > 0)
+                            {
+                                await PromptSelectMoveAsync(response);
+                            }
+                            else
+                            {
+                                ShowMenu();
+                                Console.WriteLine("Keine gültigen Züge vorhanden.");
+                            }
+
+                            break;
+                        default:
+                            Console.WriteLine("Unbekannte Option. 'B' zum Zurückkehren.");
+                            break;
+                    }
+                }
+
                 await Task.Delay(100);
             }
 
@@ -209,16 +218,21 @@ namespace MadnClient
 
         private string Status()
         {
-            if (_isGameStarted ==  false)
-                return "Warte auf Spielstart";
-
-            string status = $"Farbe am Zug: {CurrentColor()}";
-            if (_currentTurnColor == _yourColor)
-                status += " (Du bist am Zug)";
-            else 
-                status += " (Der Gegner ist am Zug)";
-            
-            return status;
+            switch (_gameState)
+            {
+                case GameState.WaitingForStart:
+                    return "Warte auf Spielstart";
+                case GameState.OpponentTurn:
+                    return $"Farbe am Zug: {CurrentColor()} (Der Gegner ist am Zug)";
+                case GameState.RollDice:
+                    return $"Farbe am Zug: {CurrentColor()} (Du bist am Zug) - Würfeln!";
+                case GameState.MoveFigure:
+                    return $"Farbe am Zug: {CurrentColor()} (Du bist am Zug) - Figur bewegen!";
+                case GameState.GameOver:
+                    return $"Spiel vorbei!";
+                default:
+                    return "";
+            }
         }
         
         private string CurrentColor()
@@ -406,23 +420,12 @@ namespace MadnClient
                 case DiceResultMessage diceMsg:
                     Logger.LogInfo($"Dice rolled: {diceMsg.Value}");
                     _currentTurnDice = diceMsg.Value;
+                    if (diceMsg.ValidMoves != null && diceMsg.ValidMoves.Count > 0)
+                        _gameState = GameState.MoveFigure;
                     _diceTcs?.TrySetResult(diceMsg);
                     break;
                 case GameboardUpdatedMessage boardMsg:
                     _currentGameboard = boardMsg.Gameboard;
-                    ShowMenu();
-                    break;
-                case GameCreatedMessage createdMsg:
-                    Logger.LogInfo($"Game created with ID: {createdMsg.GameId}");
-                    _currentGameboard = createdMsg.Gameboard;
-                    _yourColor  = createdMsg.Color;
-                    ShowMenu();
-                    break;
-                case GameJoinedMessage joinedMsg:
-                    Logger.LogInfo($"Joined game with ID: {joinedMsg.GameId}");
-                    _currentGameboard = joinedMsg.Gameboard;
-                    _yourColor = joinedMsg.Color;
-                    ShowMenu();
                     break;
                 case GameLeftMessage leftMsg:
                     Logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
@@ -432,12 +435,18 @@ namespace MadnClient
                     Logger.LogInfo($"Next player: {nextMsg.NextPlayerId}");
                     _isGameStarted = true;
                     _currentTurnColor = nextMsg.NextPlayerColor;
-                    ShowMenu();
                     if (nextMsg.NextPlayerId != _playerId)
-                        return;
-                    Logger.LogInfo("Your turn");
+                    {
+                        _gameState = GameState.OpponentTurn;
+                    }
+                    else
+                    {
+                        _gameState = GameState.RollDice;
+                        Logger.LogInfo("Your turn");
+                    }
                     break;
             }
+            _needsRedraw = true;
         }
 
         /// <summary>
@@ -457,7 +466,7 @@ namespace MadnClient
             {
                 Console.Clear();
                 ShowMenu();
-
+                
                 var key = Console.ReadKey(true);
                 switch (key.Key)
                 {

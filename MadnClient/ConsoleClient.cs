@@ -30,7 +30,6 @@ public class ConsoleClient
     public async Task RunAsync(string serverUri)
     {
         await _wsClient.ConnectAsync(serverUri);
-        await EnsureFrontendInitializedAsync();
         ShowWelcome();
         Console.ReadKey(true);
         
@@ -50,6 +49,7 @@ public class ConsoleClient
                 }
                 else
                 {
+                    _frontend = new GameFrontend(_wsClient, _playerId, response.Color, response.Gameboard);
                     await _frontend.EnterGameAsync(response.GameId);
                 }
                 
@@ -80,6 +80,7 @@ public class ConsoleClient
                     }
                     else
                     {
+                        _frontend = new GameFrontend(_wsClient, _playerId, res.Color, res.Gameboard);
                         await _frontend.EnterGameAsync(res.GameId);
                     }
                 }
@@ -107,16 +108,6 @@ public class ConsoleClient
         Console.WriteLine("Willkommen zu Mensch ärgere dich nicht");
         Console.WriteLine();
         Console.WriteLine("Beliebige Taste drücken...");
-    }
-
-    private async Task EnsureFrontendInitializedAsync()
-    {
-        if (_frontend != null) return;
-        await _welcomeTcs.Task;
-        if (_frontend == null)
-        {
-            _frontend = new GameFrontend(_wsClient, _playerId);
-        }
     }
 
     private string ShowMenu()
@@ -233,10 +224,6 @@ public class ConsoleClient
             case WelcomeMessage welcome:
                 _playerId = welcome.ClientId;
                 Logger.LogInfo($"Received WelcomeMessage. Assigned client id {_playerId}");
-                if (_frontend == null)
-                {
-                    _frontend = new GameFrontend(_wsClient, _playerId);
-                }
                 _welcomeTcs?.TrySetResult(_playerId);
                 break;
             case GameCreatedMessage createdMsg:
