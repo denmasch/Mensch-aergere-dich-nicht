@@ -75,6 +75,27 @@ public class Game
         });
         Logger.LogInfo($"Game {Id} started with {Players.Count} players.");
     }
+    
+    private bool CheckGameOver()
+    {
+        var winner = Players.FirstOrDefault(p => Gameboard.IsPlayerWinner(p.Color));
+        bool isGameOver = winner != null;
+        if (isGameOver)
+        {
+            Broadcast(new GameOverMessage
+            {
+                GameId = Id,
+                WinnerPlayerId = winner.Id,
+                WinnerColor = winner.Color
+            });
+            
+            Logger.LogInfo($"Game {Id} is over. Player {winner.Id} ({winner.Color}) wins!");
+            _gameStarted = false;
+            GameManager.RemoveGame(Id);
+        }
+
+        return isGameOver;
+    }
 
     /// <summary>
     /// Handle Messages from Clients/Players
@@ -212,6 +233,9 @@ public class Game
             GameId = Id,
             Gameboard = Gameboard.ToDto()
         });
+
+        if(CheckGameOver())
+            return;
 
         if (msg.DiceRoll == 6)
         {

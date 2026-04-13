@@ -17,6 +17,7 @@ public static class MessageType
     public const string ListGames = "list_games";
     public const string ListGamesResponse = "list_games_response";
     public const string Welcome = "welcome";
+    public const string GameOver = "game_over";
     
     // Error messages
     public const string UnknownMessageType = "unknown_message_type";
