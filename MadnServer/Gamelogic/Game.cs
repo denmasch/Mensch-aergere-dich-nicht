@@ -130,7 +130,6 @@ public class Game
     /// </summary>
     private void NextPlayer()
     {
-        //TODO: What if the current player rolled a 6
         if (Players.Count == 0) return;
         
         var current = Players[_currentPlayerIndex];
@@ -189,6 +188,12 @@ public class Game
             Value = diceValue,
             ValidMoves = validMoves
         });
+        
+        if (validMoves.Count == 0)
+        {
+            Logger.LogInfo($"Player {fromPlayer.Id} has no valid moves and will skip their turn in game {Id}.");
+            NextPlayer();
+        }
     }
 
     private void HandleMoveFigure(IPlayer fromPlayer, MoveFigureMessage msg)
@@ -208,7 +213,19 @@ public class Game
             Gameboard = Gameboard.ToDto()
         });
 
-        NextPlayer();
+        if (msg.DiceRoll == 6)
+        {
+            Broadcast(new NextPlayerMessage
+            {
+                GameId = Id,
+                NextPlayerId = fromPlayer.Id,
+                NextPlayerColor = fromPlayer.Color
+            });
+        }
+        else
+        {
+            NextPlayer();
+        }
     }
 
     private void HandleLeaveGame(IPlayer fromPlayer, LeaveGameMessage msg)

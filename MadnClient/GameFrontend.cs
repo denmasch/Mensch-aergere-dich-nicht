@@ -91,12 +91,18 @@ namespace MadnClient
                             break;
                         case ConsoleKey.S:
                             if (_gameState != GameState.WaitingForStart)
+                            {
+                                Console.WriteLine("Spiel wurde bereits gestartet.");
                                 break;
+                            }
                             await SendStartGameAsync();
                             break;
                         case ConsoleKey.W:
                             if (_gameState != GameState.RollDice)
+                            {
+                                Console.WriteLine("Du kannst nur würfeln, wenn du am Zug bist und noch nicht gewürfelt hast.");
                                 break;
+                            }
 
                             var response = await SendRollDiceAsync();
                             if (response != null && response.ValidMoves != null && response.ValidMoves.Count > 0)
@@ -109,6 +115,15 @@ namespace MadnClient
                                 Console.WriteLine("Keine gültigen Züge vorhanden.");
                             }
 
+                            break;
+                        case ConsoleKey.A:
+                        case ConsoleKey.LeftArrow:
+                        case ConsoleKey.D:
+                        case ConsoleKey.RightArrow:
+                            Console.WriteLine("Figur kann nur nach dem Würfeln ausgewählt werden.");
+                            break;
+                        case ConsoleKey.Enter:
+                            Console.WriteLine("Figur kann nur nach dem Würfeln bewegt werden.");
                             break;
                         default:
                             Console.WriteLine("Unbekannte Option. 'B' zum Zurückkehren.");
