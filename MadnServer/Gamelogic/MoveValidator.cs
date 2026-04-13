@@ -10,6 +10,11 @@ public class MoveValidator
             return false;
         }
 
+        if (IsForcedSixMoveRuleViolated(gb, fig, activePlayer, diceRollCount))
+        {
+            return false;
+        }
+
         //TODO: Test if Movement is allowed
         
         /* Allowed Movement:
@@ -27,7 +32,7 @@ public class MoveValidator
         */
         
         // Check Movement out of Home 
-        if (fig.IsHome)
+        if (IsFigureInPlayerHome(gb, fig, activePlayer))
         {
             return ValidateHomeExit(gb, activePlayer, diceRollCount);
         }
@@ -67,6 +72,65 @@ public class MoveValidator
             if (gb.Path[i].Color == activePlayer && gb.Path[i].Type == TileType.Start)
             {
                 return IsTileFree(gb.Path[i], activePlayer);
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsForcedSixMoveRuleViolated(Gameboard gb, Figure fig, Color activePlayer, int diceRollCount)
+    {
+        if (diceRollCount != 6 || !HasFigureInHome(gb, activePlayer))
+        {
+            return false;
+        }
+
+        if (!TryFindPlayerStartIndex(gb, activePlayer, out int playerStartIndex))
+        {
+            return true;
+        }
+
+        Figure? startFigure = gb.Path[playerStartIndex].OccupyingFigure;
+        bool startHasOwnFigure = startFigure?.Color == activePlayer;
+
+        if (startHasOwnFigure)
+        {
+            return startFigure != fig;
+        }
+
+        return !IsFigureInPlayerHome(gb, fig, activePlayer);
+    }
+
+    private bool HasFigureInHome(Gameboard gb, Color activePlayer)
+    {
+        if (!gb.Homes.TryGetValue(activePlayer, out Tile[] homeTiles))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < homeTiles.Length; i++)
+        {
+            if (homeTiles[i].OccupyingFigure != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private bool IsFigureInPlayerHome(Gameboard gb, Figure fig, Color activePlayer)
+    {
+        if (!gb.Homes.TryGetValue(activePlayer, out Tile[] homeTiles))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < homeTiles.Length; i++)
+        {
+            if (homeTiles[i].OccupyingFigure == fig)
+            {
+                return true;
             }
         }
 
