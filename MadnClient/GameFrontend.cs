@@ -17,6 +17,8 @@ namespace MadnClient
         private Color _currentTurnColor;
         private Color _yourColor;
         private Color? _winnerColor;
+        private Color _adminColor;
+        private int _playerCount;
         private int _currentTurnDice;
         private bool _isGameStarted = false;
         private GameboardDTO _currentGameboard;
@@ -223,10 +225,11 @@ namespace MadnClient
         private void ShowMenu()
         {
             Console.Clear();
-            Console.WriteLine($"Spiel: {_gameId}");
+            Console.WriteLine($"Spiel: {_gameId} - Spieler: {_playerCount}/4");
             Console.WriteLine();
+            Console.WriteLine($"Admin: {ColorToString(_adminColor)}");
             Console.WriteLine($"Deine Farbe: {ColorToString(_yourColor)}");
-            Console.WriteLine($"Status: {Status()} ");
+            Console.WriteLine($"Status: {Status()}");
             Console.WriteLine($"Würfel: {DiceRoll()}");
             DrawGameBoard(_currentGameboard);
             if (_gameState == GameState.GameOver)
@@ -451,6 +454,11 @@ namespace MadnClient
                     _currentGameboard = boardMsg.Gameboard;
                     break;
                 case GameLeftMessage leftMsg:
+                    if (leftMsg.PlayerId != _playerId)
+                    {
+                        Logger.LogInfo($"Player {leftMsg.PlayerId} left the game.");
+                        break;
+                    }
                     Logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
                     _leaveTcs?.TrySetResult(leftMsg);
                     break;
@@ -473,6 +481,10 @@ namespace MadnClient
                     _isGameStarted = false;
                     _gameState = GameState.GameOver;
                     _winnerColor = gameOverMsg.WinnerColor;
+                    break;
+                case GameInfoMessage infoMsg:
+                    _playerCount = infoMsg.PlayerCount;
+                    _adminColor = infoMsg.AdminColor;
                     break;
             }
             _needsRedraw = true;
