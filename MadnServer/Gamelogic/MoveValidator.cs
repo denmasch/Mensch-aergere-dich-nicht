@@ -7,6 +7,11 @@ public static class MoveValidator
     {
         if (fig.Color != activePlayer || diceRollCount <= 0)
         {
+            return false;   
+        }
+
+        if (IsForcedSixMoveRuleViolated(gb, fig, activePlayer, diceRollCount))
+        {
             return false;
         }
 
@@ -27,7 +32,7 @@ public static class MoveValidator
         */
         
         // Check Movement out of Home 
-        if (fig.IsHome)
+        if (IsFigureInPlayerHome(gb, fig, activePlayer))
         {
             return ValidateHomeExit(gb, activePlayer, diceRollCount);
         }
@@ -73,6 +78,65 @@ public static class MoveValidator
         return false;
     }
 
+    private static bool IsForcedSixMoveRuleViolated(Gameboard gb, Figure fig, Color activePlayer, int diceRollCount)
+    {
+        if (diceRollCount != 6 || !HasFigureInHome(gb, activePlayer))
+        {
+            return false;
+        }
+
+        if (!TryFindPlayerStartIndex(gb, activePlayer, out int playerStartIndex))
+        {
+            return true;
+        }
+
+        Figure? startFigure = gb.Path[playerStartIndex].OccupyingFigure;
+        bool startHasOwnFigure = startFigure?.Color == activePlayer;
+
+        if (startHasOwnFigure)
+        {
+            return startFigure != fig;
+        }
+
+        return !IsFigureInPlayerHome(gb, fig, activePlayer);
+    }
+
+    private static bool HasFigureInHome(Gameboard gb, Color activePlayer)
+    {
+        if (!gb.Homes.TryGetValue(activePlayer, out Tile[] homeTiles))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < homeTiles.Length; i++)
+        {
+            if (homeTiles[i].OccupyingFigure != null)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool IsFigureInPlayerHome(Gameboard gb, Figure fig, Color activePlayer)
+    {
+        if (!gb.Homes.TryGetValue(activePlayer, out Tile[] homeTiles))
+        {
+            return false;
+        }
+
+        for (int i = 0; i < homeTiles.Length; i++)
+        {
+            if (homeTiles[i].OccupyingFigure == fig)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private static bool TryFindCurrentPathIndex(Gameboard gb, Figure fig, out int currentTile)
     {
         return TryFindFigureOnTiles(gb.Path, fig, out currentTile);
@@ -107,7 +171,7 @@ public static class MoveValidator
     private static bool TryValidateTargetEntry(Gameboard gb, Color activePlayer, int currentTile, int playerStartIndex, int diceRollCount, out bool isAllowed)
     {
         int stepsToStart = GetStepsToStart(currentTile, playerStartIndex, gb.Path.Length);
-        if (diceRollCount <= stepsToStart)
+        if (diceRollCount < stepsToStart)
         {
             isAllowed = false;
             return false;
@@ -119,8 +183,15 @@ public static class MoveValidator
             return true;
         }
 
-        int targetIndex = diceRollCount - stepsToStart - 1;
+        int targetIndex = diceRollCount - stepsToStart;
         if (targetIndex < 0 || targetIndex >= playerTargets.Length)
+        {
+            isAllowed = false;
+            return true;
+        }
+
+        Figure? destinationFigure = playerTargets[targetIndex].OccupyingFigure;
+        if (destinationFigure?.Color == activePlayer)
         {
             isAllowed = false;
             return true;
