@@ -451,6 +451,11 @@ namespace MadnClient
                     _currentGameboard = boardMsg.Gameboard;
                     break;
                 case GameLeftMessage leftMsg:
+                    if (leftMsg.PlayerId != _playerId)
+                    {
+                        Logger.LogInfo($"Player {leftMsg.PlayerId} left the game.");
+                        break;
+                    }
                     Logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
                     _leaveTcs?.TrySetResult(leftMsg);
                     break;
