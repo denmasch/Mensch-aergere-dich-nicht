@@ -35,6 +35,8 @@ def start_clients(count):
 if __name__ == "__main__":
     check_dependencies()
 
+    os.makedirs("./logs", exist_ok=True)
+
     num_clients = int(input("Anzahl der Clients: "))
 
     start_server()
