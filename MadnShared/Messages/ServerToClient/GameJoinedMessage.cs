@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+using MadnShared.Enums;
 using MadnShared.GameAssets;
 using MadnShared.Messages.Base;
 
@@ -15,4 +17,7 @@ public class GameJoinedMessage : IGameMessage
     public Guid PlayerId { get; set; }
     
     public GameboardDTO Gameboard { get; set; }
+    
+    [JsonConverter(typeof(JsonStringEnumConverter))]    
+    public Color Color { get; set; }
 }

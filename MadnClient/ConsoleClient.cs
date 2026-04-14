@@ -12,18 +12,19 @@ namespace MadnClient;
 
 public class ConsoleClient
 {    
-    private readonly Guid _playerId = Guid.NewGuid();
+    private Guid _playerId = Guid.Empty;
     private TaskCompletionSource<ListGamesResponseMessage> _listGamesTcs;
     private TaskCompletionSource<GameCreatedMessage> _createGameTcs;
     private TaskCompletionSource<GameJoinedMessage> _joinGameTcs;
     private readonly IWebSocketClient _wsClient;
-    private readonly GameFrontend _frontend;
+    private GameFrontend _frontend;
+    private TaskCompletionSource<Guid> _welcomeTcs;
 
     public ConsoleClient(IWebSocketClient wsClient)
     {
         _wsClient = wsClient;
         _wsClient.MessageReceived += OnWsMessageReceived;
-        _frontend = new GameFrontend(_wsClient, _playerId);
+        _welcomeTcs = new TaskCompletionSource<Guid>();
     }
 
     public async Task RunAsync(string serverUri)
@@ -48,6 +49,7 @@ public class ConsoleClient
                 }
                 else
                 {
+                    _frontend = new GameFrontend(_wsClient, _playerId, response.Color, response.Gameboard);
                     await _frontend.EnterGameAsync(response.GameId);
                 }
                 
@@ -68,6 +70,7 @@ public class ConsoleClient
                 else if (game != null && int.TryParse(game, out int id))
                 {
                     var gameId = response.Games.Keys.ElementAtOrDefault(id - 1);
+                    
                     var res = await SendJoinGameAsync(gameId);
 
                     if (res == null)
@@ -77,6 +80,7 @@ public class ConsoleClient
                     }
                     else
                     {
+                        _frontend = new GameFrontend(_wsClient, _playerId, res.Color, res.Gameboard);
                         await _frontend.EnterGameAsync(res.GameId);
                     }
                 }
@@ -217,6 +221,11 @@ public class ConsoleClient
         Logger.LogInfo($"Received message: {message}");
         switch (message)
         {
+            case WelcomeMessage welcome:
+                _playerId = welcome.ClientId;
+                Logger.LogInfo($"Received WelcomeMessage. Assigned client id {_playerId}");
+                _welcomeTcs?.TrySetResult(_playerId);
+                break;
             case GameCreatedMessage createdMsg:
                 _createGameTcs?.TrySetResult(createdMsg);
                 break;
@@ -226,9 +235,6 @@ public class ConsoleClient
             case GameJoinedMessage joinResponse:
                 _joinGameTcs?.TrySetResult(joinResponse);
                 break;
-             default:
-                 Logger.LogWarning($"Unhandled message type: {message.GetType().Name}");
-                 break;
         }
     }
 

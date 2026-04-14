@@ -3,6 +3,7 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using MadnServer.Player;
+using MadnShared.Logger;
 
 namespace MadnServer.Gamelogic;
 
@@ -17,6 +18,7 @@ public static class GameManager
     {
         var game = new Game(new List<IPlayer>(){player});
         _games[game.Id] = game;
+        Logger.LogInfo($"Created new game {game.Id}.");
         return game;
     }
 
@@ -33,6 +35,7 @@ public static class GameManager
 
     public static bool RemoveGame(Guid gameId)
     {
+        Logger.LogInfo($"Removing game {gameId} from GameManager.");
         return _games.TryRemove(gameId, out _);
     }
 
@@ -40,7 +43,7 @@ public static class GameManager
     {
         if (!_games.TryGetValue(gameId, out var game))
             return null;
-
+        
         game.AddPlayer(player);
         return game;
     }

@@ -26,6 +26,10 @@ public class Game
     public Game(List<IPlayer> players)
     {
         Players = players;
+        foreach (var player in players)
+        {
+            player.Color = GetFirstUnusedColor();
+        }
         Gameboard = new Gameboard();
     }
     
@@ -37,16 +41,21 @@ public class Game
             Logger.LogInfo($"Game {Id} is already started or is full. Player cannot join.");
             return false;
         }
+
+        player.Color = GetFirstUnusedColor();
+        Players.Add(player);
+        Logger.LogInfo($"{player.Color} player joined game {Id}.");
+        return true;
+    }
+
+    private Color GetFirstUnusedColor()
+    {
         var allColors = Enum.GetValues(typeof(Color)).Cast<Color>().ToList();
 
         var usedColors = Players.Select(p => p.Color);
 
         var freeColor = allColors.FirstOrDefault(c => !usedColors.Contains(c));
-        
-        player.Color = freeColor;
-        Players.Add(player);
-        Logger.LogInfo($"{player.Color} player joined game {Id}.");
-        return true;
+        return freeColor;
     }
 
     private void StartGame()
@@ -66,6 +75,27 @@ public class Game
         });
         Logger.LogInfo($"Game {Id} started with {Players.Count} players.");
     }
+    
+    private bool CheckGameOver()
+    {
+        var winner = Players.FirstOrDefault(p => Gameboard.IsPlayerWinner(p.Color));
+        bool isGameOver = winner != null;
+        if (isGameOver)
+        {
+            Broadcast(new GameOverMessage
+            {
+                GameId = Id,
+                WinnerPlayerId = winner.Id,
+                WinnerColor = winner.Color
+            });
+            
+            Logger.LogInfo($"Game {Id} is over. Player {winner.Id} ({winner.Color}) wins!");
+            _gameStarted = false;
+            GameManager.RemoveGame(Id);
+        }
+
+        return isGameOver;
+    }
 
     /// <summary>
     /// Handle Messages from Clients/Players
@@ -82,6 +112,10 @@ public class Game
                 if (!_gameStarted && Players.Count > 0 && Players[0] == fromPlayer)
                 {
                     StartGame();
+                }
+                else
+                {
+                    Logger.LogInfo($"Player {fromPlayer.Id} is not allowed to start game {Id}.");
                 }
                 break;
             case RollDiceMessage rollDice:
@@ -117,7 +151,6 @@ public class Game
     /// </summary>
     private void NextPlayer()
     {
-        //TODO: What if the current player rolled a 6
         if (Players.Count == 0) return;
         
         var current = Players[_currentPlayerIndex];
@@ -157,11 +190,18 @@ public class Game
     private void HandleRollDice(IPlayer fromPlayer, RollDiceMessage msg)
     {
         if (!IsCurrentPlayer(fromPlayer))
+        {
+            Logger.LogInfo($"Player {fromPlayer.Id} attempted to roll dice out of turn in game {Id}.");
             return;
+        } 
 
         var diceValue = Dice.RollDice();
-
+        
+        Logger.LogInfo($"Player {fromPlayer.Id} rolled a {diceValue} in game {Id}.");
+            
         var validMoves = Gameboard.GetValidMoves(fromPlayer.Color, diceValue);
+        
+        Logger.LogInfo($"Player {fromPlayer.Id} has {validMoves.Count} valid moves.");
         
         fromPlayer.SendAsync(new DiceResultMessage
         {
@@ -169,6 +209,12 @@ public class Game
             Value = diceValue,
             ValidMoves = validMoves
         });
+        
+        if (validMoves.Count == 0)
+        {
+            Logger.LogInfo($"Player {fromPlayer.Id} has no valid moves and will skip their turn in game {Id}.");
+            NextPlayer();
+        }
     }
 
     private void HandleMoveFigure(IPlayer fromPlayer, MoveFigureMessage msg)
@@ -188,11 +234,32 @@ public class Game
             Gameboard = Gameboard.ToDto()
         });
 
-        NextPlayer();
+        if(CheckGameOver())
+            return;
+
+        if (msg.DiceRoll == 6)
+        {
+            Broadcast(new NextPlayerMessage
+            {
+                GameId = Id,
+                NextPlayerId = fromPlayer.Id,
+                NextPlayerColor = fromPlayer.Color
+            });
+        }
+        else
+        {
+            NextPlayer();
+        }
     }
 
     private void HandleLeaveGame(IPlayer fromPlayer, LeaveGameMessage msg)
     {
+        Broadcast(new GameLeftMessage
+        {
+            GameId = Id,
+            PlayerId = fromPlayer.Id
+        });
+        
         Players.Remove(fromPlayer);
         
         if (Players.Count == 0)
@@ -201,11 +268,6 @@ public class Game
             GameManager.RemoveGame(Id);
         }
 
-        Broadcast(new GameLeftMessage
-        {
-            GameId = Id,
-            PlayerId = fromPlayer.Id
-        });
         Logger.LogInfo($"Player {fromPlayer.Id} left. {Players.Count} players remaining.");
     }
 

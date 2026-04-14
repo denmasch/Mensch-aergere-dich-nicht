@@ -186,6 +186,14 @@ public class Gameboard
             Targets = Targets.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Select(t => t.toDto()).ToArray())
         };
     }
+    
+    public bool IsPlayerWinner(Color color)
+    {
+        if (!Targets.TryGetValue(color, out var targetArr))
+            return false;
+
+        return targetArr.All(t => t.OccupyingFigure != null && t.OccupyingFigure.Color == color);
+    }
 
     public Figure GetFigure(Color color, int id)
     {

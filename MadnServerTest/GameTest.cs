@@ -83,8 +83,10 @@ public sealed class GameTest
         game.HandleMessage(p1, new StartGameMessage { GameId = game.Id });
         p1.SentMessages.Clear();
         p2.SentMessages.Clear();
+        
+        var figureId = game.Gameboard.GetAllFigures(p1.Color).First().Id;
 
-        game.HandleMessage(p1, new MoveFigureMessage { GameId = game.Id, PlayerId = p1.Id, FigureId = 1, DiceRoll = 1 });
+        game.HandleMessage(p1, new MoveFigureMessage { GameId = game.Id, PlayerId = p1.Id, FigureId = figureId, DiceRoll = 1 });
 
         Assert.IsTrue(p1.SentMessages.OfType<GameboardUpdatedMessage>().Any());
         Assert.IsTrue(p2.SentMessages.OfType<GameboardUpdatedMessage>().Any());
