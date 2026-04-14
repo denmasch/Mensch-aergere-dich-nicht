@@ -254,21 +254,83 @@ public class Game
 
     private void HandleLeaveGame(IPlayer fromPlayer, LeaveGameMessage msg)
     {
+        var leaveIndex = Players.IndexOf(fromPlayer);
+        var leaveColor = fromPlayer.Color;
+
         Broadcast(new GameLeftMessage
         {
             GameId = Id,
             PlayerId = fromPlayer.Id
         });
-        
-        Players.Remove(fromPlayer);
-        
+
+        if (leaveIndex < 0)
+        {
+            Players.Remove(fromPlayer);
+            Logger.LogInfo($"Player {fromPlayer.Id} left but was not found in game {Id}.");
+            if (Players.Count == 0)
+            {
+                _gameStarted = false;
+                GameManager.RemoveGame(Id);
+            }
+
+            return;
+        }
+
+        Players.RemoveAt(leaveIndex);
+
         if (Players.Count == 0)
         {
             _gameStarted = false;
             GameManager.RemoveGame(Id);
+            Logger.LogInfo($"Player {fromPlayer.Id} left. No players remaining. Game {Id} closed.");
+            return;
         }
 
-        Logger.LogInfo($"Player {fromPlayer.Id} left. {Players.Count} players remaining.");
+        // update current player index if necessary
+        if (_gameStarted)
+        {
+            if (leaveIndex == _currentPlayerIndex)
+            {
+                var colorsCount = Enum.GetValues(typeof(Color)).Length;
+                IPlayer next = null;
+                for (int i = 1; i <= colorsCount; i++)
+                {
+                    var candidateIndex = ((int)leaveColor + i) % colorsCount;
+                    var candidateColor = (Color)candidateIndex;
+
+                    next = Players.FirstOrDefault(p => p.Color == candidateColor);
+                    if (next != null)
+                        break;
+                }
+
+                if (next == null)
+                {
+                    _currentPlayerIndex = 0;
+                    next = Players[_currentPlayerIndex];
+                }
+                else
+                {
+                    _currentPlayerIndex = Players.IndexOf(next);
+                }
+
+                Broadcast(new NextPlayerMessage
+                {
+                    GameId = Id,
+                    NextPlayerId = next.Id,
+                    NextPlayerColor = next.Color
+                });
+            }
+            else if (leaveIndex < _currentPlayerIndex)
+            {
+                // shift current player index down by one since the leaving player was before the current player in the list
+                _currentPlayerIndex--;
+                if (_currentPlayerIndex < 0) _currentPlayerIndex = 0;
+            }
+
+            // if leaveIndex > _currentPlayerIndex, no need to update current player index since the leaving player was after the current player in the list
+            Logger.LogInfo(
+                $"Player {fromPlayer.Id} left. {Players.Count} players remaining. Current index {_currentPlayerIndex}.");
+        }
     }
 
     /// <summary>
