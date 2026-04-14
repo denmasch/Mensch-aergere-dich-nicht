@@ -3,6 +3,7 @@ import platform
 import sys
 import shutil
 import time
+import os
 
 def check_dependencies():
     # check if docker is installed
