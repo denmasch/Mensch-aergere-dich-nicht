@@ -7,7 +7,7 @@ public class MoveValidator
     {
         if (fig.Color != activePlayer || diceRollCount <= 0)
         {
-            return false;
+            return false;   
         }
 
         if (IsForcedSixMoveRuleViolated(gb, fig, activePlayer, diceRollCount))
@@ -171,7 +171,7 @@ public class MoveValidator
     private bool TryValidateTargetEntry(Gameboard gb, Color activePlayer, int currentTile, int playerStartIndex, int diceRollCount, out bool isAllowed)
     {
         int stepsToStart = GetStepsToStart(currentTile, playerStartIndex, gb.Path.Length);
-        if (diceRollCount <= stepsToStart)
+        if (diceRollCount < stepsToStart)
         {
             isAllowed = false;
             return false;
@@ -183,8 +183,15 @@ public class MoveValidator
             return true;
         }
 
-        int targetIndex = diceRollCount - stepsToStart - 1;
+        int targetIndex = diceRollCount - stepsToStart;
         if (targetIndex < 0 || targetIndex >= playerTargets.Length)
+        {
+            isAllowed = false;
+            return true;
+        }
+
+        Figure? destinationFigure = playerTargets[targetIndex].OccupyingFigure;
+        if (destinationFigure?.Color == activePlayer)
         {
             isAllowed = false;
             return true;
