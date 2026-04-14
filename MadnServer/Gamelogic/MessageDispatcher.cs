@@ -57,11 +57,13 @@ public static class MessageDispatcher
                 game = GameManager.CreateGame(fromPlayer);
                 color = game.Players.Find(p => p.Id == fromPlayer.Id).Color;
                 fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id , Gameboard = game.Gameboard.ToDto(), Color = color });
+                fromPlayer.SendAsync(new GameInfoMessage() {GameId = game.Id, AdminColor = game.Players[0].Color, PlayerCount = game.Players.Count});
                 break;
             case JoinGameMessage joinGameMessage:
                 game = GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
                 color = game.Players.Find(p => p.Id == fromPlayer.Id).Color;
                 fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId , Gameboard = game.Gameboard.ToDto(), Color = color });
+                fromPlayer.SendAsync(new GameInfoMessage() {GameId = game.Id, AdminColor = game.Players[0].Color, PlayerCount = game.Players.Count});
                 break;
             case ListGamesMessage listGamesMessage:
                 var games = GameManager.GetAllGames();

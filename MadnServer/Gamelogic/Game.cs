@@ -45,6 +45,14 @@ public class Game
         player.Color = GetFirstUnusedColor();
         Players.Add(player);
         Logger.LogInfo($"{player.Color} player joined game {Id}.");
+        
+        Broadcast(new GameInfoMessage()
+        {
+            GameId = Id,
+            PlayerCount = Players.Count,
+            AdminColor = Players[0].Color
+        });
+        
         return true;
     }
 
@@ -328,9 +336,15 @@ public class Game
             }
 
             // if leaveIndex > _currentPlayerIndex, no need to update current player index since the leaving player was after the current player in the list
-            Logger.LogInfo(
-                $"Player {fromPlayer.Id} left. {Players.Count} players remaining. Current index {_currentPlayerIndex}.");
+            Logger.LogInfo($"Player {fromPlayer.Id} left. {Players.Count} players remaining. Current index {_currentPlayerIndex}.");
         }
+
+        Broadcast(new GameInfoMessage()
+        {
+            GameId = Id,
+            PlayerCount = Players.Count,
+            AdminColor = Players[0].Color
+        });
     }
 
     /// <summary>
