@@ -10,6 +10,14 @@ public static class MessageType
     public const string JoinGame = "join_game";
     public const string GameCreated = "game_created";
     public const string GameJoined = "game_joined";
+    public const string GameboardUpdated = "gameboard_updated";
+    public const string LeaveGame = "leave_game";
+    public const string GameLeft = "game_left";
+    public const string StartGame = "start_game";
+    public const string ListGames = "list_games";
+    public const string ListGamesResponse = "list_games_response";
+    public const string Welcome = "welcome";
+    public const string GameOver = "game_over";
     
     // Error messages
     public const string UnknownMessageType = "unknown_message_type";

@@ -7,3 +7,37 @@ It is used to build a CLI-based Mulitplayer Board Game in Germany known as 'Mens
 This repository uses the official Rules set by 'Schmidt Spiele GmbH' for the Game 'Mensch ärgere dich nicht'. 
 For the official Rules [click here](https://www.schmidtspiele.de/files/Produkte/4/49324%20-%20Reise%20Mensch%20%C3%A4rgere%20Dich%20nicht%C2%AE/49324_Mensch_aergere_Dich_nicht_REISE_DE.pdf).
 
+# How to play
+## Prerequisites
+- Docker and Docker Compose installed on your machine.
+- python istalled, to run the start script
+
+## Steps to play
+1. Download the last realease from the [releasepage]().
+2. Unzip the downloaded file.
+3. Open a terminal and navigate to the unzipped directory.
+4. Run the start script to set up the game server and client:
+   ```bash
+   python ./madn.py
+   ```
+## Launch manually
+1. Follow steps 1-3 from the previous section.
+2. Start the game server using Docker Compose:
+   ```bash
+   docker compose up -d
+   ```
+3. Run the client application:
+   - On Linux: 
+      ```bash
+      cd ./linux
+      ./MadnClient
+      ```
+    - On Windows:
+        ```bash
+        cd .\windows
+        MadnClient.exe
+        ```
+4. After playing, you can stop the server using:
+   ```bash
+   docker compose down
+   ```

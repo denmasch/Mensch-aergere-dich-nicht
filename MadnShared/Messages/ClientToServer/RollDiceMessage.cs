@@ -10,6 +10,8 @@ namespace MadnShared.Messages.ClientToServer;
 public class RollDiceMessage : IGameMessage
 {
     public string Type => MessageType.RollDice;
-
-    public string PlayerId { get; set; }  = "";
+        
+    public Guid GameId { get; set; }
+    
+    public Guid PlayerId { get; set; }
 }

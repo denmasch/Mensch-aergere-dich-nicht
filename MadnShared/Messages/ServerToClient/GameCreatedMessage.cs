@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using MadnShared.Enums;
+using MadnShared.GameAssets;
 using MadnShared.Messages.Base;
 
 namespace MadnShared.Messages.ServerToClient;
@@ -8,8 +11,13 @@ namespace MadnShared.Messages.ServerToClient;
 public class GameCreatedMessage : IGameMessage
 {
     public string Type => MessageType.GameCreated;
+        
+    public Guid GameId { get; set; }
     
-    public string GameId { get; set; }  = "";
+    public Guid PlayerId { get; set; }
     
-    public string PlayerId { get; set; } = "";
+    public GameboardDTO Gameboard { get; set; }
+    
+    [JsonConverter(typeof(JsonStringEnumConverter))]    
+    public Color Color { get; set; }
 }

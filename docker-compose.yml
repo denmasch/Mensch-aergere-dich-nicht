@@ -1,0 +1,13 @@
+services:
+  madnserver:
+    image: ghcr.io/denmasch/madn-server:latest
+    build:
+      context: .
+      dockerfile: MadnServer/Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./logs:/app/logs
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+    restart: on-failure

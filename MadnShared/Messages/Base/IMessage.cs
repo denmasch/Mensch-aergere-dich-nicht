@@ -1,6 +1,6 @@
 namespace MadnShared.Messages.Base;
 
-public interface IGameMessage
+public interface IMessage
 {
     public string Type { get; }
 }

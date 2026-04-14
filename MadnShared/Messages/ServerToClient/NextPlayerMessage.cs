@@ -10,6 +10,11 @@ namespace MadnShared.Messages.ServerToClient;
 public class NextPlayerMessage : IGameMessage
 {
     public string Type => MessageType.NextPlayer;
+        
+    public Guid GameId { get; set; }
 
-    public string PlayerId { get; set; }  = "";
+    public Guid NextPlayerId { get; set; }
+    
+    [JsonConverter(typeof(JsonStringEnumConverter))]    
+    public Color NextPlayerColor { get; set; }
 }

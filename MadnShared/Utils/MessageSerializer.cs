@@ -7,16 +7,16 @@ namespace MadnShared.Utils;
 
 public static class MessageSerializer
 {
-    public static string Serialize(IGameMessage message)
+    public static string Serialize(IMessage message)
     {
         return JsonSerializer.Serialize(message, message.GetType());
     }
 
-    public static IGameMessage? Deserialize(string json)
+    public static IMessage? Deserialize(string json)
     {
         var doc = JsonDocument.Parse(json);
         var type = doc.RootElement.GetProperty("Type").GetString();
-        IGameMessage? message;
+        IMessage? message;
         
         switch (type)
         {
@@ -26,8 +26,8 @@ public static class MessageSerializer
             case MessageType.RollDice:
                 message = JsonSerializer.Deserialize<RollDiceMessage>(json);
                 break;
-            case MessageType.CreateGame:
-                message = JsonSerializer.Deserialize<CreateGameMessage>(json);
+            case MessageType.StartGame:
+                message = JsonSerializer.Deserialize<StartGameMessage>(json);
                 break;
             case MessageType.GameCreated:
                 message = JsonSerializer.Deserialize<GameCreatedMessage>(json);
@@ -43,6 +43,30 @@ public static class MessageSerializer
                 break;
             case MessageType.MoveFigure:
                 message = JsonSerializer.Deserialize<MoveFigureMessage>(json);
+                break;
+            case MessageType.GameboardUpdated:
+                message = JsonSerializer.Deserialize<GameboardUpdatedMessage>(json);
+                break;
+            case MessageType.LeaveGame:
+                message = JsonSerializer.Deserialize<LeaveGameMessage>(json);
+                break;
+            case MessageType.GameLeft:
+                message = JsonSerializer.Deserialize<GameLeftMessage>(json);
+                break;
+            case MessageType.CreateGame:
+                message = JsonSerializer.Deserialize<CreateGameMessage>(json);
+                break;
+            case MessageType.ListGames:
+                message = JsonSerializer.Deserialize<ListGamesMessage>(json);
+                break;
+            case MessageType.ListGamesResponse:
+                message = JsonSerializer.Deserialize<ListGamesResponseMessage>(json);
+                break;
+            case MessageType.Welcome:
+                message = JsonSerializer.Deserialize<WelcomeMessage>(json);
+                break;
+            case MessageType.GameOver:
+                message = JsonSerializer.Deserialize<GameOverMessage>(json);
                 break;
             default:
                 message = null;
