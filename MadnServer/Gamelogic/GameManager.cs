@@ -28,9 +28,11 @@ public static class GameManager
         return game;
     }
 
-    public static Dictionary<Guid, int> GetAllGames()
+    public static Dictionary<Guid, int> GetAllJoinableGames()
     {
-        return _games.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Players.Count);
+        return _games
+            .Where(kvp => kvp.Value != null && !kvp.Value.IsStarted && kvp.Value.Players.Count < 4)
+            .ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Players.Count);
     }
 
     public static bool RemoveGame(Guid gameId)

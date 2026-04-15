@@ -66,7 +66,7 @@ public static class MessageDispatcher
                 fromPlayer.SendAsync(new GameInfoMessage() {GameId = game.Id, AdminColor = game.Players[0].Color, PlayerCount = game.Players.Count});
                 break;
             case ListGamesMessage listGamesMessage:
-                var games = GameManager.GetAllGames();
+                var games = GameManager.GetAllJoinableGames();
                 fromPlayer.SendAsync(new ListGamesResponseMessage { Games = games });
                 break;
             default:
