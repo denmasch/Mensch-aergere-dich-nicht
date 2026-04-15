@@ -17,6 +17,8 @@ public class Game
     public Guid Id { get; } = Guid.NewGuid();
     public Gameboard Gameboard { get; set; }
     public List<IPlayer> Players { get; private set; }
+    
+    public bool IsStarted => _gameStarted;
 
     private bool _gameStarted = false;
     private int _currentPlayerIndex = 0;
