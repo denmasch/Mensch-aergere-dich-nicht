@@ -1,4 +1,5 @@
-﻿using MadnShared.GameAssets;
+﻿using System.Text;
+using MadnShared.GameAssets;
 using MadnShared.Logger;
 using System.Threading.Tasks;
 
@@ -8,6 +9,8 @@ public class Program
 {
     public static void Main(string[] args)
     {
+        Console.OutputEncoding = Encoding.UTF8;
+        Console.InputEncoding = Encoding.UTF8;
         Logger.AddWriter(new FileWriter("logs/ClientLog.txt"));
         Logger.LogInfo("Starting Client");
         
