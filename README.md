@@ -13,7 +13,7 @@ For the official Rules [click here](https://www.schmidtspiele.de/files/Produkte/
 - python istalled, to run the start script
 
 ## Steps to play
-1. Download the last realease from the [releasepage]().
+1. Download the last realease from the [releasepage](https://github.com/denmasch/Mensch-aergere-dich-nicht/releases/latest).
 2. Unzip the downloaded file.
 3. Open a terminal and navigate to the unzipped directory.
 4. Run the start script to set up the game server and client:
