@@ -22,29 +22,36 @@ public class Game
     private int _currentPlayerIndex = 0;
 
     private const int MaxPlayers = 4;
+    private readonly object _colorLock = new object();
 
     public Game(List<IPlayer> players)
     {
         Players = players;
-        foreach (var player in players)
+        lock (_colorLock)
         {
-            player.Color = GetFirstUnusedColor();
+            foreach (var player in players)
+            {
+                player.Color = GetFirstUnusedColor();
+            }
         }
         Gameboard = new Gameboard();
     }
     
     public bool AddPlayer(IPlayer player)
     {
-        // if game already started or max players reached, reject join
-        if (_gameStarted || Players.Count >= MaxPlayers)
+        lock (_colorLock)
         {
-            Logger.LogInfo($"Game {Id} is already started or is full. Player cannot join.");
-            return false;
-        }
+            // if game already started or max players reached, reject join
+            if (_gameStarted || Players.Count >= MaxPlayers)
+            {
+                Logger.LogInfo($"Game {Id} is already started or is full. Player cannot join.");
+                return false;
+            }
 
-        player.Color = GetFirstUnusedColor();
-        Players.Add(player);
-        Logger.LogInfo($"{player.Color} player joined game {Id}.");
+            player.Color = GetFirstUnusedColor();
+            Players.Add(player);
+            Logger.LogInfo($"{player.Color} player joined game {Id}.");
+        }
         
         Broadcast(new GameInfoMessage()
         {
