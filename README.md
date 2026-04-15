@@ -10,7 +10,6 @@ For the official Rules [click here](https://www.schmidtspiele.de/files/Produkte/
 # How to play
 ## Prerequisites
 - Docker and Docker Compose installed on your machine.
-- python istalled, to run the start script
 
 ## Steps to play
 1. Download the last realease from the [releasepage](https://github.com/denmasch/Mensch-aergere-dich-nicht/releases/latest).
