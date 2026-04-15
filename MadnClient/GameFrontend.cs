@@ -1,4 +1,5 @@
 using System;
+using System.Text;
 using System.Threading.Tasks;
 using MadnShared.Messages.ServerToClient;
 using MadnShared.Logger;
@@ -316,44 +317,48 @@ namespace MadnClient
         
         private void DrawGameBoard(GameboardDTO board)
         {
-            Console.WriteLine();
-            
+            var sb = new StringBuilder();
+
             for (int y = 0; y < 11; y++)
             {
                 for (int x = 0; x < 11; x++)
                 {
-                    DrawTileAt(x, y, board);
+                    sb.Append(RenderTileString(x, y, board));
+                    sb.Append(" ");
                 }
-                Console.ResetColor();
-                Console.WriteLine();
+                sb.Append("\x1b[0m"); // ansi reset 
+                sb.AppendLine();
             }
+
+            Console.Write(sb.ToString());
+            Console.ResetColor();
         }
 
-        private void DrawTileAt(int x, int y, GameboardDTO board)
+        private string RenderTileString(int x, int y, GameboardDTO board)
         {
-            ConsoleColor bg = ConsoleColor.Black;
-            ConsoleColor fg = ConsoleColor.White;
+            AnsiColor bg = AnsiColor.Black;
+            AnsiColor fg = AnsiColor.White;
             string symbol = "  ";
 
             // The Homes 
-            if (x <= 1 && y <= 1) { bg = ConsoleColor.DarkYellow; fg = ConsoleColor.Yellow; } // top left
-            else if (x >= 9 && y <= 1) { bg = ConsoleColor.DarkGreen; fg = ConsoleColor.Green; } // top right
-            else if (x <= 1 && y >= 9) { bg = ConsoleColor.DarkBlue; fg = ConsoleColor.Blue; } // bottom left
-            else if (x >= 9 && y >= 9) { bg = ConsoleColor.DarkRed; fg = ConsoleColor.Red; } // bottom right
+            if (x <= 1 && y <= 1) { bg = AnsiColor.DarkYellow; fg = AnsiColor.Yellow; } // top left
+            else if (x >= 9 && y <= 1) { bg = AnsiColor.DarkGreen; fg = AnsiColor.Green; } // top right
+            else if (x <= 1 && y >= 9) { bg = AnsiColor.DarkBlue; fg = AnsiColor.Blue; } // bottom left
+            else if (x >= 9 && y >= 9) { bg = AnsiColor.DarkRed; fg = AnsiColor.Red; } // bottom right
             
             // The Path
             else if ((x >= 4 && x <= 6) || (y >= 4 && y <= 6)) 
             { 
-                bg = ConsoleColor.Gray; 
-                fg = ConsoleColor.DarkGray; 
+                bg = AnsiColor.Gray; 
+                fg = AnsiColor.DarkGray; 
             }
             
             // Get Target Tile
-            if (x == 5 && y == 5) { bg = ConsoleColor.Black; fg = ConsoleColor.White; }
-            else if (x >= 1 && x <= 5 && y == 5) { bg = ConsoleColor.DarkYellow; fg = ConsoleColor.Yellow; }
-            else if (x == 5 && y >= 1 && y <= 5 ) { bg = ConsoleColor.DarkGreen; fg = ConsoleColor.Green; }
-            else if (x >= 5 && x <= 9 && y == 5) { bg = ConsoleColor.DarkRed; fg = ConsoleColor.Red; }
-            else if (x == 5 && y >= 5 && y <= 9) { bg = ConsoleColor.DarkBlue; fg = ConsoleColor.Blue; }
+            if (x == 5 && y == 5) { bg = AnsiColor.Black; fg = AnsiColor.White; }
+            else if (x >= 1 && x <= 5 && y == 5) { bg = AnsiColor.DarkYellow; fg = AnsiColor.Yellow; }
+            else if (x == 5 && y >= 1 && y <= 5 ) { bg = AnsiColor.DarkGreen; fg = AnsiColor.Green; }
+            else if (x >= 5 && x <= 9 && y == 5) { bg = AnsiColor.DarkRed; fg = AnsiColor.Red; }
+            else if (x == 5 && y >= 5 && y <= 9) { bg = AnsiColor.DarkBlue; fg = AnsiColor.Blue; }
 
             TileDTO tile = GetTileFromBoard(x, y, board);
             if (tile != null && tile.Type is TileType.Start)
@@ -369,26 +374,48 @@ namespace MadnClient
             // Highlight start/target of selected move
             if (_highlightStart.HasValue && _highlightStart.Value.x == x && _highlightStart.Value.y == y)
             {
-                bg = ConsoleColor.DarkGray;
+                bg = AnsiColor.DarkGray;
             }
             else if (_highlightTarget.HasValue && _highlightTarget.Value.x == x && _highlightTarget.Value.y == y)
             {
-                bg = ConsoleColor.DarkGray;
+                bg = AnsiColor.DarkGray;
             }
 
-            if (bg != ConsoleColor.Black) 
+            if (bg == AnsiColor.Black)
             {
-                Console.BackgroundColor = bg;
-                Console.ForegroundColor = fg;
-                Console.Write(symbol);
+                return "  ";
             }
-            else
+
+            // return ANSI colored symbol
+            var ansi = GetAnsiSequence(fg, bg);
+            var reset = "\x1b[0m";
+            return ansi + symbol + reset;
+        }
+        
+        private string GetAnsiSequence(AnsiColor fg, AnsiColor bg)
+        {
+            int fgCode = AnsiColorToCode(fg);
+            int bgCode = AnsiColorToCode(bg);
+            return $"\x1b[38;5;{fgCode};48;5;{bgCode}m";
+        }
+        
+        private int AnsiColorToCode(AnsiColor c)
+        {
+            return c switch
             {
-                Console.ResetColor();
-                Console.Write("  ");
-            }
-            Console.ResetColor();
-            Console.Write(" ");
+                AnsiColor.Black => 0,
+                AnsiColor.White => 7,
+                AnsiColor.Gray => 248,
+                AnsiColor.DarkGray => 238,
+                AnsiColor.Red => 9,
+                AnsiColor.DarkRed=> 124,
+                AnsiColor.Green => 2,
+                AnsiColor.DarkGreen => 22,
+                AnsiColor.Yellow => 226,
+                AnsiColor.DarkYellow => 11,
+                AnsiColor.Blue => 4,
+                AnsiColor.DarkBlue => 20
+            };
         }
 
         private TileDTO GetTileFromBoard(int x, int y, GameboardDTO board)
@@ -430,27 +457,27 @@ namespace MadnClient
             return null;
         }
 
-        private ConsoleColor GetFigureColor(Color color)
+        private AnsiColor GetFigureColor(Color color)
         {
             return color switch
             {
-                Color.Yellow => ConsoleColor.Yellow,
-                Color.Green => ConsoleColor.Green,
-                Color.Blue => ConsoleColor.Blue,
-                Color.Red => ConsoleColor.Red,
-                _ => ConsoleColor.Black
+                Color.Yellow => AnsiColor.Yellow,
+                Color.Green => AnsiColor.Green,
+                Color.Blue => AnsiColor.Blue,
+                Color.Red => AnsiColor.Red,
+                _ => AnsiColor.Black
             };
         }
 
-        private ConsoleColor GetBackroundColor(Color color)
+        private AnsiColor GetBackroundColor(Color color)
         {
             return color switch
             {
-                Color.Yellow => ConsoleColor.DarkYellow,
-                Color.Green => ConsoleColor.DarkGreen,
-                Color.Blue => ConsoleColor.DarkBlue,
-                Color.Red => ConsoleColor.DarkRed,
-                _ => ConsoleColor.Gray
+                Color.Yellow => AnsiColor.DarkYellow,
+                Color.Green => AnsiColor.DarkGreen,
+                Color.Blue => AnsiColor.DarkBlue,
+                Color.Red => AnsiColor.DarkRed,
+                _ => AnsiColor.Gray
             };
         }
         private void OnWsMessageReceived(IMessage message)
