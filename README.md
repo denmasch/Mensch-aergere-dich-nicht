@@ -16,25 +16,17 @@ For the official Rules [click here](https://www.schmidtspiele.de/files/Produkte/
 1. Download the last realease from the [releasepage](https://github.com/denmasch/Mensch-aergere-dich-nicht/releases/latest).
 2. Unzip the downloaded file.
 3. Open a terminal and navigate to the unzipped directory.
-4. Run the start script to set up the game server and client:
-   ```bash
-   python ./madn.py
-   ```
-## Launch manually
-1. Follow steps 1-3 from the previous section.
-2. Start the game server using Docker Compose:
+4. Start the game server using Docker Compose:
    ```bash
    docker compose up -d
    ```
 3. Run the client application:
    - On Linux: 
       ```bash
-      cd ./linux
       ./MadnClient
       ```
     - On Windows:
         ```bash
-        cd .\windows
         MadnClient.exe
         ```
 4. After playing, you can stop the server using:
