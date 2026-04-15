@@ -69,6 +69,11 @@ public class ConsoleClient
                 }
                 else if (game != null && int.TryParse(game, out int id))
                 {
+                    if (id < 1 || id > response.Games.Count)
+                    {
+                        Console.WriteLine("Invalid game number");
+                        continue;
+                    }
                     var gameId = response.Games.Keys.ElementAtOrDefault(id - 1);
                     
                     var res = await SendJoinGameAsync(gameId);
