@@ -83,3 +83,31 @@ jobs:
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
 
+  create-release:
+    needs: dotnet-build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write 
+    
+    steps:
+      - name: Download Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: madn-release
+          path: ./release-files
+  
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: Release v1.0.${{ github.run_number }}
+          draft: false
+          prerelease: false
+          files: |
+            ./release-files/linux/*
+            ./release-files/windows/*
+            ./release-files/docker-compose.yml
+            ./release-files/madn.py
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
