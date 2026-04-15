@@ -47,4 +47,19 @@ public sealed class Test1
 
         Assert.IsFalse(isAllowed);
     }
+
+    [TestMethod]
+    public void ValidateMove_TargetEntry_CanSkipOccupiedFirstTargetTile_ReturnsTrue()
+    {
+        Gameboard gb = new();
+        Figure movingFigure = new(Color.Yellow, 400);
+        Figure ownFigureInFirstTargetTile = new(Color.Yellow, 401);
+
+        gb.Path[39].OccupyingFigure = movingFigure;
+        gb.Targets[Color.Yellow][0].OccupyingFigure = ownFigureInFirstTargetTile;
+
+        bool isAllowed = MoveValidator.ValidateMove(gb, movingFigure, Color.Yellow, 2);
+
+        Assert.IsTrue(isAllowed);
+    }
 }

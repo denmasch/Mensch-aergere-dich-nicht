@@ -191,13 +191,13 @@ public static class MoveValidator
         }
 
         Figure? destinationFigure = playerTargets[targetIndex].OccupyingFigure;
-        if (destinationFigure?.Color == activePlayer)
+        if (destinationFigure != null)
         {
             isAllowed = false;
             return true;
         }
 
-        isAllowed = AreTargetTilesFree(playerTargets, -1, targetIndex);
+        isAllowed = true;
         return true;
     }
 
@@ -214,7 +214,7 @@ public static class MoveValidator
             return false;
         }
 
-        return AreTargetTilesFree(playerTargets, currentTargetIndex, newTargetIndex);
+        return !playerTargets[newTargetIndex].IsOccupied;
     }
 
     private static int GetStepsToStart(int currentTile, int playerStartIndex, int pathLength)
@@ -248,19 +248,6 @@ public static class MoveValidator
 
         tileIndex = -1;
         return false;
-    }
-
-    private static bool AreTargetTilesFree(Tile[] playerTargets, int startExclusive, int endInclusive)
-    {
-        for (int i = startExclusive + 1; i <= endInclusive; i++)
-        {
-            if (playerTargets[i].IsOccupied)
-            {
-                return false;
-            }
-        }
-
-        return true;
     }
 
     private static bool ValidatePathMove(Gameboard gb, int currentTile, Color activePlayer, int diceRollCount)
