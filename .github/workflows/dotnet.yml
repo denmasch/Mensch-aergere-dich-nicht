@@ -49,13 +49,24 @@ jobs:
           -o ./release-artifacts/linux
     - name: Copy Shared Files
       run: |
-        cp docker-compose.yml ./release-artifacts/
-        cp madn.py ./release-artifacts/
+        cp docker-compose.yml ./release-artifacts/windows
+        cp madn.py ./release-artifacts/windows
+        cp docker-compose.yml ./release-artifacts/linux
+        cp madn.py ./release-artifacts/linux
+    - name: Create Archives
+      run: |
+        cd release-artifacts/windows
+        zip -r ../../madn-windows-x64.zip *
+        cd ../linux
+        tar -czvf ../../madn-linux-x64.tar.gz *
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: madn-release
-        path: ./release-artifacts/
+        path: |
+          *.zip
+          *.tar.gz
+          
 
   docker-build-push:
     needs: dotnet-build
@@ -82,44 +93,25 @@ jobs:
           file: ./MadnServer/Dockerfile 
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-
+          
   create-release:
     needs: dotnet-build
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
-      contents: write 
-    
+      contents: write
     steps:
-      - name: Download Artifact
+      - name: Download Archives
         uses: actions/download-artifact@v4
         with:
           name: madn-release
-          path: ./temp-release
-      
-      - name: Zip Artifact
-        run: |
-          cd ./temp-release
-          zip -r ../madn-release.zip .
-          cd ..
-      
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          path: ./assets
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: v1.0.${{ github.run_number }}
-          release_name: Release v1.0.${{ github.run_number }}
-          draft: false
-          prerelease: false
-          
-      - name: Upload Release Asset
-        uses: actions/upload-release-asset@v1
+          name: Release v1.0.${{ github.run_number }}
+          files: ./assets/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./madn-release.zip
-          asset_name: madn-release.zip
-          asset_content_type: application/zip
