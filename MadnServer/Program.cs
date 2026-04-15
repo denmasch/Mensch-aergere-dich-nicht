@@ -47,35 +47,48 @@ class Program
 
                 var buffer = new byte[1024 * 4];
                 using var ms = new MemoryStream();
-                while (webSocket.State == WebSocketState.Open)
+                try
                 {
-                    WebSocketReceiveResult result;
-                    ms.SetLength(0); 
-                    ms.Seek(0, SeekOrigin.Begin);
-                    do
+                    while (webSocket.State == WebSocketState.Open)
                     {
-                        result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
-                        if (result.MessageType == WebSocketMessageType.Close)
+                        WebSocketReceiveResult result;
+                        ms.SetLength(0);
+                        ms.Seek(0, SeekOrigin.Begin);
+                        do
                         {
-                            await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed connection",
+                            result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer),
                                 CancellationToken.None);
-                            Logger.LogInfo("Client disconnected");
-                            break;
-                        }
-                        ms.Write(buffer, 0, result.Count);
+                            if (result.MessageType == WebSocketMessageType.Close)
+                            {
+                                await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed connection",
+                                    CancellationToken.None);
+                                Logger.LogInfo("Client disconnected");
+                                break;
+                            }
+
+                            ms.Write(buffer, 0, result.Count);
+                        } while (!result.EndOfMessage);
+
+                        ms.Seek(0, SeekOrigin.Begin);
+                        using var reader = new StreamReader(ms, Encoding.UTF8, leaveOpen: true);
+                        var msgJson = await reader.ReadToEndAsync();
+
+                        var msg = MessageSerializer.Deserialize(msgJson);
+                        Logger.LogInfo("Received Message: " + msgJson);
+                        if (msg is null)
+                            continue;
+
+                        MessageDispatcher.Dispatch(player, msg);
                     }
-                    while (!result.EndOfMessage);
-
-                    ms.Seek(0, SeekOrigin.Begin);
-                    using var reader = new StreamReader(ms, Encoding.UTF8, leaveOpen: true);
-                    var msgJson = await reader.ReadToEndAsync();
-                    
-                    var msg = MessageSerializer.Deserialize(msgJson);
-                    Logger.LogInfo("Received Message: "+ msgJson);
-                    if (msg is null)
-                        continue;
-
-                    MessageDispatcher.Dispatch(player, msg);
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError("WebSocket error: " + ex.Message);
+                }
+                finally
+                {
+                    GameManager.RemovePlayerFromGames(player);
+                    Logger.LogInfo($"Cleaned up player {player.Id} on disconnect.");
                 }
             }
             else
