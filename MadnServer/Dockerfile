@@ -15,9 +15,13 @@ RUN dotnet publish "MadnServer.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 
+RUN mkdir -p /app/logs && chown -R app:app /app/logs
+
 ENV ASPNETCORE_URLS=http://+:5000
 
 COPY --from=build /app/publish .
+
+USER app
 
 EXPOSE 5000
 
