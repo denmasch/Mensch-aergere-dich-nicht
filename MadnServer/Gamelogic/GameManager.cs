@@ -47,4 +47,16 @@ public static class GameManager
         game.AddPlayer(player);
         return game;
     }
+    public static void RemovePlayerFromGames(IPlayer player)
+    {
+        foreach (var game in _games.Values.ToList())
+        {
+            if (game.Players.Any(p => p.Id == player.Id))
+            {
+                Logger.LogInfo($"Removing player {player.Id} from game {game.Id} due to disconnect.");
+                game.RemovePlayer(player);
+                break;
+            }
+        }
+    }
 }

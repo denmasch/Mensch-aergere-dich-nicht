@@ -134,9 +134,9 @@ public class Game
                 Logger.LogInfo($"Player {fromPlayer.Id} requested to move figure in game {Id}.");
                 HandleMoveFigure(fromPlayer, moveFigure);
                 break;
-            case LeaveGameMessage leave:
+            case LeaveGameMessage leaveGame:
                 Logger.LogInfo($"Player {fromPlayer.Id} requested to leave game {Id}.");
-                HandleLeaveGame(fromPlayer, leave);
+                HandleLeaveGame(fromPlayer, leaveGame);
                 break;
             default:
                 Logger.LogError($"Unhandled message type {message.GetType().Name}");
@@ -259,8 +259,12 @@ public class Game
             NextPlayer();
         }
     }
-
     private void HandleLeaveGame(IPlayer fromPlayer, LeaveGameMessage msg)
+    {
+        RemovePlayer(fromPlayer);
+    }
+
+    public void RemovePlayer(IPlayer fromPlayer)
     {
         var leaveIndex = Players.IndexOf(fromPlayer);
         var leaveColor = fromPlayer.Color;
