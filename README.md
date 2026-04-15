@@ -10,12 +10,19 @@ For the official Rules [click here](https://www.schmidtspiele.de/files/Produkte/
 # How to play
 ## Prerequisites
 - Docker and Docker Compose installed on your machine.
+- Python installed on your machine.
 
 ## Steps to play
 1. Download the last realease from the [releasepage](https://github.com/denmasch/Mensch-aergere-dich-nicht/releases/latest).
 2. Unzip the downloaded file.
 3. Open a terminal and navigate to the unzipped directory.
-4. Start the game server using Docker Compose:
+4. Run the start up script:
+```bash
+python madn.py
+```
+## Launch manually
+1. Follow steps 1-3 from the previous section.
+2. Start the game server using Docker Compose:
    ```bash
    docker compose up -d
    ```
