@@ -245,12 +245,7 @@ namespace MadnClient
             else
             {
                 Console.WriteLine();
-                Console.WriteLine("Optionen:");
-                Console.WriteLine("B) Spiel verlassen");
-                Console.WriteLine("S) Spiel starten");
-                Console.WriteLine("W) Würfeln");
-                Console.WriteLine("A/D) Figur auswählen");
-                Console.WriteLine("Enter) Figur bewegen");
+                ShowOptions();
             }
         }
 
@@ -270,6 +265,26 @@ namespace MadnClient
                     return $"Spiel vorbei!";
                 default:
                     return "";
+            }
+        }
+        
+        private void ShowOptions()
+        {
+            Console.WriteLine();
+            Console.WriteLine("Optionen:");
+            Console.WriteLine("B) Spiel verlassen");
+            if (_gameState == GameState.WaitingForStart && _yourColor == _adminColor)
+            {
+                Console.WriteLine("S) Spiel starten");
+            }
+            if (_gameState == GameState.RollDice)
+            {
+                Console.WriteLine("W) Würfeln");
+            }
+            if (_gameState == GameState.MoveFigure)
+            {
+                Console.WriteLine("A/D) Figur auswählen");
+                Console.WriteLine("Enter) Figur bewegen");
             }
         }
         
