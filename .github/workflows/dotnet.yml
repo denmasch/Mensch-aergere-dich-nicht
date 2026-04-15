@@ -50,9 +50,7 @@ jobs:
     - name: Copy Shared Files
       run: |
         cp docker-compose.yml ./release-artifacts/windows
-        cp madn.py ./release-artifacts/windows
         cp docker-compose.yml ./release-artifacts/linux
-        cp madn.py ./release-artifacts/linux
     - name: Create Archives
       run: |
         cd release-artifacts/windows
