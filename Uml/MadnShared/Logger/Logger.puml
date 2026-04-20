@@ -1,0 +1,8 @@
+@startuml
+class Logger <<static>> {
+    + {static} AddWriter(writer:ILogWriter) : void
+    + {static} LogInfo(msg:string) : void
+    + {static} LogWarning(msg:string) : void
+    + {static} LogError(msg:string) : void
+}
+@enduml

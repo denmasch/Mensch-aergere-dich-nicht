@@ -1,0 +1,8 @@
+@startuml
+class GameLeftMessage {
+    + Type : string <<get>>
+}
+IGameMessage <|-- GameLeftMessage
+GameLeftMessage --> "GameId" Guid
+GameLeftMessage --> "PlayerId" Guid
+@enduml

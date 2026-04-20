@@ -1,0 +1,8 @@
+@startuml
+class GameboardUpdatedMessage {
+    + Type : string <<get>>
+}
+IGameMessage <|-- GameboardUpdatedMessage
+GameboardUpdatedMessage --> "GameId" Guid
+GameboardUpdatedMessage --> "Gameboard" GameboardDTO
+@enduml

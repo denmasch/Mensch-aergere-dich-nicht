@@ -1,0 +1,6 @@
+@startuml
+class FigureDTO {
+    + Id : int <<get>> <<set>>
+}
+FigureDTO --> "Color" Color
+@enduml

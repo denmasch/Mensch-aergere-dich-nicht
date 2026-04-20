@@ -1,0 +1,9 @@
+@startuml
+class RealPlayer {
+    + RealPlayer(webSocket:WebSocket)
+    + <<async>> SendAsync(message:IMessage) : Task
+}
+IPlayer <|-- RealPlayer
+RealPlayer o-> "Id" Guid
+RealPlayer --> "Color" Color
+@enduml

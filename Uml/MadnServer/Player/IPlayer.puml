@@ -1,0 +1,7 @@
+@startuml
+interface IPlayer {
+    + SendAsync(message:IMessage) : Task
+}
+IPlayer --> "Id" Guid
+IPlayer --> "Color" Color
+@enduml

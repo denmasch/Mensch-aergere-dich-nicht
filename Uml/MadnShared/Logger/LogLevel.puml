@@ -1,0 +1,7 @@
+@startuml
+enum LogLevel {
+    Info,
+    Warning,
+    Error,
+}
+@enduml

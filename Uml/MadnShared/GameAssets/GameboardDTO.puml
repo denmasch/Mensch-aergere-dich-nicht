@@ -1,0 +1,8 @@
+@startuml
+class GameboardDTO {
+}
+class "Dictionary`2"<T1,T2> {
+}
+GameboardDTO --> "Homes<Color,TileDTO[]>" "Dictionary`2"
+GameboardDTO --> "Targets<Color,TileDTO[]>" "Dictionary`2"
+@enduml

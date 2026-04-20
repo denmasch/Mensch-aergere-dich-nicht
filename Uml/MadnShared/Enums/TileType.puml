@@ -1,0 +1,8 @@
+@startuml
+enum TileType {
+    Home,
+    Start,
+    Normal,
+    Target,
+}
+@enduml

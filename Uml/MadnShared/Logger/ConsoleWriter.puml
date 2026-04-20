@@ -1,0 +1,6 @@
+@startuml
+class ConsoleWriter {
+    + Write(level:LogLevel, message:string) : void
+}
+ILogWriter <|-- ConsoleWriter
+@enduml

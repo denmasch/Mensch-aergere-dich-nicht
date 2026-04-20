@@ -1,0 +1,9 @@
+@startuml
+class GameInfoMessage {
+    + Type : string <<get>>
+    + PlayerCount : int <<get>> <<set>>
+}
+IGameMessage <|-- GameInfoMessage
+GameInfoMessage --> "GameId" Guid
+GameInfoMessage --> "AdminColor" Color
+@enduml

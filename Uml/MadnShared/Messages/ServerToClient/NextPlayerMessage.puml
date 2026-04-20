@@ -1,0 +1,9 @@
+@startuml
+class NextPlayerMessage {
+    + Type : string <<get>>
+}
+IGameMessage <|-- NextPlayerMessage
+NextPlayerMessage --> "GameId" Guid
+NextPlayerMessage --> "NextPlayerId" Guid
+NextPlayerMessage --> "NextPlayerColor" Color
+@enduml

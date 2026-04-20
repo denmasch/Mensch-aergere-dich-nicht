@@ -1,0 +1,6 @@
+@startuml
+class GameFrontend {
+    + GameFrontend(wsClient:IWebSocketClient, playerId:Guid, yourColor:Color, initialBoard:GameboardDTO)
+    + <<async>> EnterGameAsync(gameId:Guid) : Task
+}
+@enduml

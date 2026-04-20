@@ -1,0 +1,5 @@
+@startuml
+class MessageDispatcher <<static>> {
+    + {static} Dispatch(fromPlayer:IPlayer, message:IMessage) : void
+}
+@enduml

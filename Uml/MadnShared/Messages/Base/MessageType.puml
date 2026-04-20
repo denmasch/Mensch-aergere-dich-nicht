@@ -1,0 +1,22 @@
+@startuml
+class MessageType <<static>> {
+    + <<const>> RollDice : string = "roll_dice"
+    + <<const>> DiceResult : string = "dice_result"
+    + <<const>> NextPlayer : string = "next_player"
+    + <<const>> MoveFigure : string = "move_figure"
+    + <<const>> CreateGame : string = "create_game"
+    + <<const>> JoinGame : string = "join_game"
+    + <<const>> GameCreated : string = "game_created"
+    + <<const>> GameJoined : string = "game_joined"
+    + <<const>> GameboardUpdated : string = "gameboard_updated"
+    + <<const>> LeaveGame : string = "leave_game"
+    + <<const>> GameLeft : string = "game_left"
+    + <<const>> StartGame : string = "start_game"
+    + <<const>> ListGames : string = "list_games"
+    + <<const>> ListGamesResponse : string = "list_games_response"
+    + <<const>> Welcome : string = "welcome"
+    + <<const>> GameOver : string = "game_over"
+    + <<const>> GameInfo : string = "game_info"
+    + <<const>> UnknownMessageType : string = "unknown_message_type"
+}
+@enduml

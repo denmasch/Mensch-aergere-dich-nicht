@@ -1,0 +1,5 @@
+@startuml
+interface IMessage {
+    + Type : string <<get>>
+}
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+class GameJoinedMessage {
+    + Type : string <<get>>
+}
+IGameMessage <|-- GameJoinedMessage
+GameJoinedMessage --> "GameId" Guid
+GameJoinedMessage --> "PlayerId" Guid
+GameJoinedMessage --> "Gameboard" GameboardDTO
+GameJoinedMessage --> "Color" Color
+@enduml

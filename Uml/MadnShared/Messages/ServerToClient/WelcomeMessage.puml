@@ -1,0 +1,7 @@
+@startuml
+class WelcomeMessage {
+    + Type : string <<get>>
+}
+IMessage <|-- WelcomeMessage
+WelcomeMessage --> "ClientId" Guid
+@enduml

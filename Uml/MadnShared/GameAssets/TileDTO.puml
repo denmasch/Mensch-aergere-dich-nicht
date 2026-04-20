@@ -1,0 +1,8 @@
+@startuml
+class TileDTO {
+    + IsOccupied : bool <<get>>
+}
+TileDTO --> "OccupyingFigure" FigureDTO
+TileDTO --> "Type" TileType
+TileDTO --> "Color" Color
+@enduml

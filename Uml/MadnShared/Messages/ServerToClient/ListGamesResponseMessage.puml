@@ -1,0 +1,9 @@
+@startuml
+class ListGamesResponseMessage {
+    + Type : string <<get>>
+}
+class "Dictionary`2"<T1,T2> {
+}
+ILobbyMessage <|-- ListGamesResponseMessage
+ListGamesResponseMessage --> "Games<Guid,int>" "Dictionary`2"
+@enduml

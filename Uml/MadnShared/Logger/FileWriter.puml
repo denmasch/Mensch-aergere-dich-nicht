@@ -1,0 +1,7 @@
+@startuml
+class FileWriter {
+    + FileWriter(path:string)
+    + Write(level:LogLevel, message:string) : void
+}
+ILogWriter <|-- FileWriter
+@enduml

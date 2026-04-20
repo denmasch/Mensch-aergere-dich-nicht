@@ -1,0 +1,6 @@
+@startuml
+interface IGameMessage {
+}
+IMessage <|-- IGameMessage
+IGameMessage --> "GameId" Guid
+@enduml

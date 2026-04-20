@@ -1,0 +1,12 @@
+@startuml
+class WebSocketClient {
+    +  <<event>> MessageReceived : Action<IMessage> 
+    + IsConnected : bool <<get>>
+    + <<async>> ConnectAsync(serverUri:string) : Task
+    + <<async>> SendAsync(message:IMessage) : Task
+    + <<async>> CloseAsync() : Task
+    + Dispose() : void
+}
+IWebSocketClient <|-- WebSocketClient
+IDisposable <|-- WebSocketClient
+@enduml

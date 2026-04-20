@@ -1,0 +1,5 @@
+@startuml
+class Dice <<static>> {
+    + {static} RollDice() : int
+}
+@enduml

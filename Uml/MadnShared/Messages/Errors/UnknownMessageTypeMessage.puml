@@ -1,0 +1,7 @@
+@startuml
+class UnknownMessageTypeMessage {
+    + Type : string <<get>>
+}
+IGameMessage <|-- UnknownMessageTypeMessage
+UnknownMessageTypeMessage --> "GameId" Guid
+@enduml

@@ -1,0 +1,10 @@
+@startuml
+class GameManager <<static>> {
+    + {static} CreateGame(player:IPlayer) : Game
+    + {static} GetGame(gameId:Guid) : Game?
+    + {static} GetAllJoinableGames() : Dictionary<Guid, int>
+    + {static} RemoveGame(gameId:Guid) : bool
+    + {static} TryJoinGame(gameId:Guid, player:IPlayer) : Game
+    + {static} RemovePlayerFromGames(player:IPlayer) : void
+}
+@enduml
