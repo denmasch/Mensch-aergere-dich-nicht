@@ -1,0 +1,10 @@
+@startuml
+class MoveFigureMessage {
+    + Type : string <<get>>
+    + FigureId : int <<get>> <<set>>
+    + DiceRoll : int <<get>> <<set>>
+}
+IGameMessage <|-- MoveFigureMessage
+MoveFigureMessage --> "GameId" Guid
+MoveFigureMessage --> "PlayerId" Guid
+@enduml

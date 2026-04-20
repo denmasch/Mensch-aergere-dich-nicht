@@ -1,0 +1,6 @@
+@startuml
+class CreateGameMessage {
+    + Type : string <<get>>
+}
+ILobbyMessage <|-- CreateGameMessage
+@enduml

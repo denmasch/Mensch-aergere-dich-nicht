@@ -1,0 +1,8 @@
+@startuml
+class RollDiceMessage {
+    + Type : string <<get>>
+}
+IGameMessage <|-- RollDiceMessage
+RollDiceMessage --> "GameId" Guid
+RollDiceMessage --> "PlayerId" Guid
+@enduml

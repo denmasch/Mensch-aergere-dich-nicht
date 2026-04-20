@@ -1,0 +1,17 @@
+@startuml
+class Gameboard {
+    + {static} PathLength : int <<get>> <<set>> = 40
+    + Gameboard()
+    + ToDto() : GameboardDTO
+    + IsPlayerWinner(color:Color) : bool
+    + GetFigure(color:Color, id:int) : Figure
+    + MoveFigure(fig:Figure, activePlayer:Color, diceRollCount:int) : bool
+    + GetStartIndexForColor(color:Color) : int
+    + GetValidMoves(color:Color, diceRollCount:int) : List<Move>
+    + GetAllFigures(color:Color) : List<Figure>
+}
+class "Dictionary`2"<T1,T2> {
+}
+Gameboard o-> "Homes<Color,Tile[]>" "Dictionary`2"
+Gameboard o-> "Targets<Color,Tile[]>" "Dictionary`2"
+@enduml

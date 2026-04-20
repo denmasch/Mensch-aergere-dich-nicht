@@ -1,0 +1,6 @@
+@startuml
+class ConsoleClient {
+    + ConsoleClient(wsClient:IWebSocketClient)
+    + <<async>> RunAsync(serverUri:string) : Task
+}
+@enduml

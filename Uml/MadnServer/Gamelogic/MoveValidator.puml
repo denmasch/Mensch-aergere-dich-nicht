@@ -1,0 +1,5 @@
+@startuml
+class MoveValidator <<static>> {
+    + {static} ValidateMove(gb:Gameboard, fig:Figure, activePlayer:Color, diceRollCount:int) : bool
+}
+@enduml

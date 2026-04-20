@@ -1,0 +1,12 @@
+@startuml
+class DiceResultMessage {
+    + Type : string <<get>>
+    + Value : int <<get>> <<set>>
+}
+class "List`1"<T> {
+}
+IGameMessage <|-- DiceResultMessage
+DiceResultMessage --> "PlayerId" Guid
+DiceResultMessage --> "GameId" Guid
+DiceResultMessage o-> "ValidMoves<Move>" "List`1"
+@enduml

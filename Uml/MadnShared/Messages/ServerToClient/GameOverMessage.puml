@@ -1,0 +1,9 @@
+@startuml
+class GameOverMessage {
+    + Type : string <<get>>
+}
+IGameMessage <|-- GameOverMessage
+GameOverMessage --> "GameId" Guid
+GameOverMessage --> "WinnerPlayerId" Guid
+GameOverMessage --> "WinnerColor" Color
+@enduml

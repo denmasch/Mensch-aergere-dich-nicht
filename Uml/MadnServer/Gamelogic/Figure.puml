@@ -1,0 +1,9 @@
+@startuml
+class Figure {
+    + Figure(color:Color, id:int)
+    + Id : int <<get>>
+    + IsHome : bool <<get>> <<set>>
+    + toDto() : FigureDTO
+}
+Figure --> "Color" Color
+@enduml

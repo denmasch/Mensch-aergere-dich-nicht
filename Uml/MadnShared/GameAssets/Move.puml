@@ -1,0 +1,6 @@
+@startuml
+class Move {
+    + FigureIndex : int <<get>> <<set>>
+    + Steps : int <<get>> <<set>>
+}
+@enduml

@@ -1,0 +1,6 @@
+@startuml
+class MessageSerializer <<static>> {
+    + {static} Serialize(message:IMessage) : string
+    + {static} Deserialize(json:string) : IMessage?
+}
+@enduml

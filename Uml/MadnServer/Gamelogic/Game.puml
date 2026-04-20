@@ -1,0 +1,14 @@
+@startuml
+class Game {
+    + IsStarted : bool <<get>>
+    + Game(players:List<IPlayer>)
+    + AddPlayer(player:IPlayer) : bool
+    + HandleMessage(fromPlayer:IPlayer, message:IGameMessage) : void
+    + RemovePlayer(fromPlayer:IPlayer) : void
+}
+class "List`1"<T> {
+}
+Game o-> "Id" Guid
+Game --> "Gameboard" Gameboard
+Game --> "Players<IPlayer>" "List`1"
+@enduml

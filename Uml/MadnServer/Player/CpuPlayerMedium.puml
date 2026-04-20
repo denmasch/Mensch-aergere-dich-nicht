@@ -1,0 +1,8 @@
+@startuml
+class CpuPlayerMedium {
+    + SendAsync(message:IMessage) : Task
+}
+ICpuPlayer <|-- CpuPlayerMedium
+CpuPlayerMedium --> "Color" Color
+CpuPlayerMedium o-> "Id" Guid
+@enduml

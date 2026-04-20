@@ -1,0 +1,9 @@
+@startuml
+enum GameState {
+    WaitingForStart,
+    RollDice,
+    MoveFigure,
+    OpponentTurn,
+    GameOver,
+}
+@enduml

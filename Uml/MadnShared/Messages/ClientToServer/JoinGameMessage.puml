@@ -1,0 +1,8 @@
+@startuml
+class JoinGameMessage {
+    + Type : string <<get>>
+}
+ILobbyMessage <|-- JoinGameMessage
+JoinGameMessage --> "GameId" Guid
+JoinGameMessage --> "PlayerId" Guid
+@enduml
