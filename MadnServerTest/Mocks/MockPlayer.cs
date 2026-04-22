@@ -16,9 +16,8 @@ public class MockPlayer : IPlayer
         
     }
 
-    public Task SendAsync(IMessage message)
+    public async Task SendAsync(IMessage message)
     {
         SentMessages.Add(message);
-        return Task.CompletedTask;
     }
 }
