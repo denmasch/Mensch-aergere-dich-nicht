@@ -1,0 +1,8 @@
+@startuml
+class Test1 <<sealed>> {
+    + ValidateMove_TargetEntry_OnOwnOccupiedTargetTile_ReturnsFalse() : void
+    + ValidateMove_TargetEntry_OnFreeTargetTile_ReturnsTrue() : void
+    + ValidateMove_TargetEntry_OvershootsTargetByOne_ReturnsFalse() : void
+    + ValidateMove_TargetEntry_CanSkipOccupiedFirstTargetTile_ReturnsTrue() : void
+}
+@enduml

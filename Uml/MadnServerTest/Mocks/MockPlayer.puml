@@ -1,0 +1,12 @@
+@startuml
+class MockPlayer {
+    + MockPlayer()
+    + <<async>> SendAsync(message:IMessage) : Task
+}
+class "List`1"<T> {
+}
+IPlayer <|-- MockPlayer
+MockPlayer o-> "SentMessages<IMessage>" "List`1"
+MockPlayer o-> "Id" Guid
+MockPlayer --> "Color" Color
+@enduml

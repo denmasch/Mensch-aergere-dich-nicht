@@ -1,0 +1,13 @@
+@startuml
+class GameTest <<sealed>> {
+    + HandleMessage_StartGameMessage_FromAdmin_StartsGameAndSendsNextPlayer() : void
+    + HandleMessage_StartGameMessage_FromNonAdmin_DoesNotStartGame() : void
+    + HandleMessage_RollDiceMessage_FromCurrentPlayer_SendsDiceResult() : void
+    + HandleMessage_RollDiceMessage_FromNonCurrentPlayer_IsIgnored() : void
+    + HandleMessage_MoveFigureMessage_FromCurrentPlayer_BroadcastsGameboardAndAdvancesPlayer() : void
+    + HandleMessage_MoveFigureMessage_FromNonCurrentPlayer_IsIgnored() : void
+    + HandleMessage_LeaveGameMessage_RemovesPlayerAndBroadcastsGameLeft() : void
+    + HandleMessage_UnknownMessageType_BroadcastsUnknownMessageTypeMessage() : void
+    + AddPlayer_AssignsNextFreeColor_AndRejectsWhenGameIsFull() : void
+}
+@enduml

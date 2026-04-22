@@ -1,0 +1,10 @@
+@startuml
+!include ./MSTestSettings.puml
+!include ./GameTest.puml
+!include ./GameboardTest.puml
+!include ./Test1.puml
+!include ./Mocks/MockPlayer.puml
+!include ./obj/Debug/net8.0/MadnServerTest.GlobalUsings.g.puml
+!include ./obj/Debug/net8.0/.NETCoreApp,Version=v8.0.AssemblyAttributes.puml
+!include ./obj/Debug/net8.0/MadnServerTest.AssemblyInfo.puml
+@enduml

@@ -1,0 +1,11 @@
+@startuml
+class GameboardTest <<sealed>> {
+    + GetFigureTest() : void
+    + MoveFigureOutOfHomeTest() : void
+    + MoveFigureOutOfHomeNo6Test() : void
+    + MoveFigureAlongPathTest() : void
+    + MoveFigureKicksOpponentTest() : void
+    + MoveFigureIntoTargetTest() : void
+    + MoveFigureWithinTargetForwardTest() : void
+}
+@enduml
