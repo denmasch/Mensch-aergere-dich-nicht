@@ -1,6 +1,4 @@
-﻿// ...existing code...
-using System;
-using System.Collections.Generic;
+﻿using System;
 using MadnShared.Enums;
 
 namespace MadnShared.Stats
@@ -9,10 +7,9 @@ namespace MadnShared.Stats
     {
         public Guid PlayerId { get; set; }
         public Color Color { get; set; }
-        public int Moves { get; set; }
+        // total used dice rolls that resulted in moves (movement counter)
+        public int MovementCount { get; set; }
+        // number of opponent figures this player captured
         public int Captures { get; set; }
-        public int DiceRolls { get; set; }
-        public int UnusableDice { get; set; }
     }
 }
-// ...existing code...

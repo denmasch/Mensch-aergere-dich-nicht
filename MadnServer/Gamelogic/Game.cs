@@ -116,7 +116,17 @@ public class Game
             _gameStarted = false;
 
             // end stats collection and persist
-            _ = StatsService.Instance.EndMatch(Id, DateTime.UtcNow);
+            try
+            {
+                Logger.LogInfo($"Persisting stats for finished game {Id}...");
+                // wait for the async persistence to finish to ensure the JSON is written
+                StatsService.Instance.EndMatch(Id, DateTime.UtcNow, winner.Id, winner.Color).GetAwaiter().GetResult();
+                Logger.LogInfo($"Stats persisted for game {Id}.");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error while persisting stats for game {Id}: {ex.Message}");
+            }
 
             GameManager.RemoveGame(Id);
         }

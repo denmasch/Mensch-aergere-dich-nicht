@@ -19,10 +19,17 @@ namespace MadnServer.Services
 
         private readonly ConcurrentDictionary<Guid, MatchStats> _activeMatches = new ConcurrentDictionary<Guid, MatchStats>();
         private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _locks = new ConcurrentDictionary<Guid, SemaphoreSlim>();
-        private readonly string _outDir = "logs/matches";
+        private string _outDir = Path.Combine("logs", "matches");
 
         private StatsService()
         {
+            Directory.CreateDirectory(_outDir);
+        }
+
+        public void SetOutputDirectory(string outDir)
+        {
+            if (string.IsNullOrWhiteSpace(outDir)) return;
+            _outDir = outDir;
             Directory.CreateDirectory(_outDir);
         }
 
@@ -31,7 +38,8 @@ namespace MadnServer.Services
             var ms = new MatchStats
             {
                 GameId = gameId,
-                StartTime = DateTime.UtcNow
+                StartTime = DateTime.UtcNow,
+                TotalTurns = 0
             };
 
             foreach (var p in players)
@@ -40,10 +48,8 @@ namespace MadnServer.Services
                 {
                     PlayerId = p.Id,
                     Color = p.Color,
-                    Moves = 0,
-                    Captures = 0,
-                    DiceRolls = 0,
-                    UnusableDice = 0
+                    MovementCount = 0,
+                    Captures = 0
                 });
             }
 
@@ -56,92 +62,55 @@ namespace MadnServer.Services
             return ms.Players.Find(p => p.PlayerId == playerId);
         }
 
+        // legacy: record dice roll (no-op for simplified stats)
         public void RecordDiceRoll(Guid gameId, Guid playerId, int diceValue, DateTime time)
         {
-            if (!_activeMatches.TryGetValue(gameId, out var ms))
-                return;
-
-            // Append dice roll to the last turn if it belongs to the same player, otherwise create a new turn
-            var lastTurn = ms.Turns.Count > 0 ? ms.Turns[^1] : null;
-            if (lastTurn != null && lastTurn.PlayerId == playerId)
-            {
-                lastTurn.DiceRolls.Add(diceValue);
-            }
-            else
-            {
-                var turn = new TurnEntry { TurnNumber = ms.Turns.Count + 1, PlayerId = playerId, Timestamp = time };
-                turn.DiceRolls.Add(diceValue);
-                ms.Turns.Add(turn);
-            }
-
-            var ps = GetPlayerStats(ms, playerId);
-            if (ps != null)
-                ps.DiceRolls++;
+            // no longer tracked per requirement
+            return;
         }
 
+        // legacy: record unusable dice (no-op)
         public void RecordUnusableDice(Guid gameId, Guid playerId, int diceValue, DateTime time)
         {
-            if (!_activeMatches.TryGetValue(gameId, out var ms))
-                return;
-
-            // attach unusable dice to last turn if same player
-            var lastTurn = ms.Turns.Count > 0 ? ms.Turns[^1] : null;
-            if (lastTurn != null && lastTurn.PlayerId == playerId)
-            {
-                lastTurn.DiceRolls.Add(diceValue);
-                lastTurn.Skipped = true;
-            }
-            else
-            {
-                var turn = new TurnEntry { TurnNumber = ms.Turns.Count + 1, PlayerId = playerId, Timestamp = time, Skipped = true };
-                turn.DiceRolls.Add(diceValue);
-                ms.Turns.Add(turn);
-            }
-
-            var ps = GetPlayerStats(ms, playerId);
-            if (ps != null)
-                ps.UnusableDice++;
+            // no longer tracked
+            return;
         }
 
+        // Record a move: increment MovementCount and Captures
         public void RecordMove(Guid gameId, Guid playerId, int figureId, int steps, bool captured, int? capturedFigureId, DateTime time)
         {
             if (!_activeMatches.TryGetValue(gameId, out var ms))
                 return;
 
-            // attach to last turn if same player
-            var lastTurn = ms.Turns.Count > 0 ? ms.Turns[^1] : null;
-            if (lastTurn == null || lastTurn.PlayerId != playerId)
-            {
-                lastTurn = new TurnEntry { TurnNumber = ms.Turns.Count + 1, PlayerId = playerId, Timestamp = time };
-                ms.Turns.Add(lastTurn);
-            }
-
-            lastTurn.Moves.Add(new MoveEntry { FigureId = figureId, Steps = steps, Captured = captured, CapturedFigureId = capturedFigureId });
-
             var ps = GetPlayerStats(ms, playerId);
             if (ps != null)
             {
-                ps.Moves++;
+                // movement counter counts used dice rolls that resulted in moves
+                ps.MovementCount++;
                 if (captured) ps.Captures++;
             }
         }
 
+        // Count total turns across all players
         public void RecordTurnStart(Guid gameId, Guid playerId, DateTime time)
         {
             if (!_activeMatches.TryGetValue(gameId, out var ms))
                 return;
 
-            // always create a new TurnEntry with monotonically increasing TurnNumber
-            var turn = new TurnEntry { TurnNumber = ms.Turns.Count + 1, PlayerId = playerId, Timestamp = time };
-            ms.Turns.Add(turn);
+            ms.TotalTurns++;
         }
 
-        public async Task EndMatch(Guid gameId, DateTime endTime)
+        public async Task EndMatch(Guid gameId, DateTime endTime, Guid? winnerPlayerId = null, Color? winnerColor = null)
         {
             if (!_activeMatches.TryRemove(gameId, out var ms))
                 return;
 
             ms.EndTime = endTime;
+
+            if (winnerPlayerId.HasValue)
+                ms.WinnerPlayerId = winnerPlayerId.Value;
+            if (winnerColor.HasValue)
+                ms.WinnerColor = winnerColor.Value;
 
             if (!_locks.TryRemove(gameId, out var sem))
             {
@@ -155,6 +124,8 @@ namespace MadnServer.Services
                 var opts = new JsonSerializerOptions { WriteIndented = true };
                 var json = JsonSerializer.Serialize(ms, opts);
                 await File.WriteAllTextAsync(fname, json);
+                // log full path for easier debugging
+                MadnShared.Logger.Logger.LogInfo($"Stats written to: {Path.GetFullPath(fname)}");
             }
             catch (Exception ex)
             {
