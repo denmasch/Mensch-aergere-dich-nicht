@@ -14,10 +14,14 @@ public sealed class GameTest
 {
     private static Game CreateGameWithPlayers(out MockPlayer p1, out MockPlayer p2)
     {
-        p1 = new MockPlayer();
-        p1.Color = Color.Yellow;
-        p2 = new MockPlayer();
-        p2.Color = Color.Green;
+        p1 = new MockPlayer()
+        {
+            Color = Color.Yellow
+        };
+        p2 = new MockPlayer
+        {
+            Color = Color.Green
+        };
         var players = new List<IPlayer> { p1, p2 };
         return new Game(players);
     }
