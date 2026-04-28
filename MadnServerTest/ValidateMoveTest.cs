@@ -4,7 +4,7 @@ using MadnShared.Enums;
 namespace MadnServerTest;
 
 [TestClass]
-public sealed class Test1
+public sealed class ValidateMoveTest
 {
     [TestMethod]
     public void ValidateMove_TargetEntry_OnOwnOccupiedTargetTile_ReturnsFalse()
