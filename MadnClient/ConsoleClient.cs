@@ -23,6 +23,7 @@ public class ConsoleClient
     private readonly IWebSocketClient _wsClient;
     private GameFrontend _frontend;
     private TaskCompletionSource<Guid> _welcomeTcs;
+    private TaskCompletionSource<MatchHistoryResponseMessage> _matchHistoryTcs;
 
     public ConsoleClient(IWebSocketClient wsClient)
     {
@@ -142,143 +143,81 @@ public class ConsoleClient
 
     private async Task ShowMatchHistoryAsync()
     {
-        while (true)
+        try
         {
-            Console.Clear();
-            Console.WriteLine("Matchhistory\n");
-            var files = FindMatchFiles();
-            if (files == null || files.Count == 0)
+            _matchHistoryTcs = new TaskCompletionSource<MatchHistoryResponseMessage>();
+            var req = new ListMatchHistoryMessage();
+            await SendMessageAsync(req);
+            Logger.LogInfo("Sent ListMatchHistory request");
+
+            var resp = await _matchHistoryTcs.Task;
+            var matches = resp?.Matches ?? new System.Collections.Generic.List<MatchStats>();
+
+            if (matches.Count == 0)
             {
+                Console.Clear();
                 Console.WriteLine("Keine Matches gefunden.");
                 Console.WriteLine("Drücke eine Taste, um zurückzugehen...");
                 Console.ReadKey(true);
                 return;
             }
 
-            Console.WriteLine("Num | GameId                                 | StartTime               | Winner");
-            Console.WriteLine(new string('-', 80));
-            for (int i = 0; i < files.Count; i++)
+            while (true)
             {
-                var path = files[i];
-                try
+                Console.Clear();
+                Console.WriteLine("Matchhistory\n");
+                Console.WriteLine("Num | GameId                                 | StartTime               | Winner");
+                Console.WriteLine(new string('-', 80));
+                for (int i = 0; i < matches.Count; i++)
                 {
-                    var json = File.ReadAllText(path);
-                    var ms = JsonSerializer.Deserialize<MatchStats>(json);
+                    var ms = matches[i];
                     var winner = ms?.WinnerColor.HasValue == true ? ms.WinnerColor.Value.ToString() : "-";
                     var start = ms?.StartTime.ToString("s") ?? "-";
                     Console.WriteLine($"{i + 1,3} | {ms?.GameId,-36} | {start,-22} | {winner}");
                 }
-                catch
+
+                Console.WriteLine();
+                Console.WriteLine("Gib die Nummer eines Spiels ein, um Details anzusehen, oder 'b' um zurückzugehen:");
+                var input = Console.ReadLine();
+                if (string.IsNullOrWhiteSpace(input)) continue;
+                if (input.Equals("b", StringComparison.OrdinalIgnoreCase)) return;
+                if (int.TryParse(input, out int sel))
                 {
-                    Console.WriteLine($"{i + 1,3} | {Path.GetFileName(path),-36} | (invalid) ");
+                    if (sel < 1 || sel > matches.Count)
+                    {
+                        Console.WriteLine("Ungültige Auswahl, drücke eine Taste...");
+                        Console.ReadKey(true);
+                        continue;
+                    }
+
+                    var ms = matches[sel - 1];
+                    ShowMatchDetailsFromStats(ms);
                 }
-            }
-
-            Console.WriteLine();
-            Console.WriteLine("Gib die Nummer eines Spiels ein, um Details anzusehen, oder 'b' um zurückzugehen:");
-            var input = Console.ReadLine();
-            if (string.IsNullOrWhiteSpace(input)) continue;
-            if (input.Equals("b", StringComparison.OrdinalIgnoreCase)) return;
-            if (int.TryParse(input, out int sel))
-            {
-                if (sel < 1 || sel > files.Count)
-                {
-                    Console.WriteLine("Ungültige Auswahl, drücke eine Taste...");
-                    Console.ReadKey(true);
-                    continue;
-                }
-
-                var selPath = files[sel - 1];
-                ShowMatchDetails(selPath);
-            }
-        }
-    }
-
-    private List<string> FindMatchFiles()
-    {
-        var candidates = new List<string>();
-        // try several reasonable locations relative to the client
-        var baseDir = AppContext.BaseDirectory;
-        // 1) repo root MadnServer/logs/matches (upwards search for .sln)
-        var dir = new DirectoryInfo(baseDir);
-        DirectoryInfo? root = dir;
-        while (root != null && root.Parent != null)
-        {
-            if (root.GetFiles("*.sln").Any()) break;
-            root = root.Parent;
-        }
-
-        if (root != null && root.GetFiles("*.sln").Any())
-        {
-            // prefer repoRoot/MadnServer/logs/matches
-            var p1 = Path.Combine(root.FullName, "MadnServer", "logs", "matches");
-            var p2 = Path.Combine(root.FullName, "logs", "matches");
-            candidates.Add(p1);
-            candidates.Add(p2);
-        }
-
-        // 2) relative to current working directory
-        candidates.Add(Path.Combine(Directory.GetCurrentDirectory(), "MadnServer", "logs", "matches"));
-        candidates.Add(Path.Combine(Directory.GetCurrentDirectory(), "logs", "matches"));
-
-        // 3) relative to AppContext.BaseDirectory
-        candidates.Add(Path.Combine(AppContext.BaseDirectory, "..", "..", "MadnServer", "logs", "matches"));
-        candidates.Add(Path.Combine(AppContext.BaseDirectory, "..", "..", "logs", "matches"));
-
-        foreach (var c in candidates)
-        {
-            try
-            {
-                var full = Path.GetFullPath(c);
-                if (Directory.Exists(full))
-                {
-                    var files = Directory.GetFiles(full, "*.json").OrderByDescending(File.GetLastWriteTime).ToList();
-                    if (files.Count > 0) return files;
-                }
-            }
-            catch
-            {
-                /* ignore invalid paths */
-            }
-        }
-
-        return new List<string>();
-    }
-
-    private void ShowMatchDetails(string filePath)
-    {
-        Console.Clear();
-        Console.WriteLine($"Match: {Path.GetFileName(filePath)}\n");
-        try
-        {
-            var json = File.ReadAllText(filePath);
-            var ms = JsonSerializer.Deserialize<MatchStats>(json);
-            if (ms == null)
-            {
-                Console.WriteLine("Could not parse match file.");
-                Console.WriteLine("Drücke eine Taste um zurückzugehen...");
-                Console.ReadKey(true);
-                return;
-            }
-
-            Console.WriteLine($"GameId: {ms.GameId}");
-            Console.WriteLine($"Start: {ms.StartTime}");
-            Console.WriteLine($"End: {ms.EndTime}");
-            Console.WriteLine($"TotalTurns: {ms.TotalTurns}");
-            Console.WriteLine(
-                $"Winner: {(ms.WinnerColor.HasValue ? ms.WinnerColor.Value.ToString() : "-")} ({(ms.WinnerPlayerId.HasValue ? ms.WinnerPlayerId.ToString() : "-")})\n");
-
-            Console.WriteLine("Players:");
-            Console.WriteLine("Color    MovementCount    Captures");
-            Console.WriteLine(new string('-', 40));
-            foreach (var p in ms.Players)
-            {
-                Console.WriteLine($"{p.Color,-8} {p.MovementCount,14} {p.Captures,12}");
             }
         }
         catch (Exception ex)
         {
-            Console.WriteLine("Fehler beim Lesen der Match-Datei: " + ex.Message);
+            Logger.LogError("Error while requesting match history: " + ex.Message);
+        }
+    }
+
+    private void ShowMatchDetailsFromStats(MatchStats ms)
+    {
+        Console.Clear();
+        Console.WriteLine($"Match: {ms.GameId}\n");
+
+        Console.WriteLine($"GameId: {ms.GameId}");
+        Console.WriteLine($"Start: {ms.StartTime}");
+        Console.WriteLine($"End: {ms.EndTime}");
+        Console.WriteLine($"TotalTurns: {ms.TotalTurns}");
+        Console.WriteLine($"Winner: {(ms.WinnerColor.HasValue ? ms.WinnerColor.Value.ToString() : "-")} ({(ms.WinnerPlayerId.HasValue ? ms.WinnerPlayerId.ToString() : "-")})\n");
+
+        Console.WriteLine("Players:");
+        Console.WriteLine("Color    MovementCount    Captures");
+        Console.WriteLine(new string('-', 40));
+        foreach (var p in ms.Players)
+        {
+            Console.WriteLine($"{p.Color,-8} {p.MovementCount,14} {p.Captures,12}");
         }
 
         Console.WriteLine();
@@ -375,6 +314,9 @@ public class ConsoleClient
             case GameJoinedMessage joinResponse:
                 _joinGameTcs?.TrySetResult(joinResponse);
                 break;
+            case MatchHistoryResponseMessage mh:
+                _matchHistoryTcs?.TrySetResult(mh);
+                break;
         }
     }
 
@@ -416,5 +358,4 @@ public class ConsoleClient
     }
 
 }
-
 

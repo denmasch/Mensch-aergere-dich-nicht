@@ -137,5 +137,41 @@ namespace MadnServer.Services
                 sem.Release();
             }
         }
+
+        // Read all stored match JSON files from the output directory and return deserialized list
+        public List<MatchStats> GetStoredMatches()
+        {
+            var result = new List<MatchStats>();
+
+            try
+            {
+                if (!Directory.Exists(_outDir))
+                    return result;
+
+                var files = Directory.GetFiles(_outDir, "*.json");
+                var opts = new JsonSerializerOptions();
+
+                foreach (var f in files)
+                {
+                    try
+                    {
+                        var json = File.ReadAllText(f);
+                        var ms = JsonSerializer.Deserialize<MatchStats>(json, opts);
+                        if (ms != null)
+                            result.Add(ms);
+                    }
+                    catch (Exception ex)
+                    {
+                        MadnShared.Logger.Logger.LogError($"Failed to read match file {f}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MadnShared.Logger.Logger.LogError($"Failed to enumerate match files in {_outDir}: {ex.Message}");
+            }
+
+            return result;
+        }
     }
 }
