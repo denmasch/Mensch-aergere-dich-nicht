@@ -147,6 +147,10 @@ public class Game
                 Logger.LogInfo($"Player {fromPlayer.Id} requested to leave game {Id}.");
                 HandleLeaveGame(fromPlayer, leaveGame);
                 break;
+            case AddCpuPlayerMessage addCpuPlayer:
+                Logger.LogInfo($"Player {fromPlayer.Id} requested to add cpu player {Id}.");
+                HandleAddCpuPlayer(fromPlayer, addCpuPlayer);
+                break;
             default:
                 Logger.LogError($"Unhandled message type {message.GetType().Name}");
                 Broadcast(new UnknownMessageTypeMessage
@@ -202,6 +206,41 @@ public class Game
             NextPlayerId = next.Id,
             NextPlayerColor = next.Color
         });
+    }
+    private void HandleAddCpuPlayer(IPlayer fromPlayer, AddCpuPlayerMessage msg)
+    {
+        if (_gameStarted || Players.Count >= MaxPlayers || fromPlayer != Players[0])
+        {
+            Logger.LogInfo($"Player {fromPlayer.Id} is not allowed to add CPU player.");
+            return;
+        }
+
+        ICpuPlayer cpuPlayer;
+
+        switch (msg.Difficulty)
+        {
+            case Difficulty.Easy:
+                cpuPlayer = new CpuPlayerEasy();
+                break;
+            case Difficulty.Medium:
+                cpuPlayer = new CpuPlayerMedium();
+                break;
+            case Difficulty.Hard:
+                cpuPlayer = new CpuPlayerHard();
+                break;
+            default:
+                Logger.LogError($"Invalid difficulty level {msg.Difficulty} for CPU player.");
+                return;
+        }
+        
+        if (AddPlayer(cpuPlayer))
+        {
+            Logger.LogInfo($"CPU player added to game {Id} by player {fromPlayer.Id}.");
+        }
+        else
+        {
+            Logger.LogInfo($"Failed to add CPU player to game {Id}. Game may be full or already started.");
+        }
     }
 
     private void HandleRollDice(IPlayer fromPlayer, RollDiceMessage msg)
