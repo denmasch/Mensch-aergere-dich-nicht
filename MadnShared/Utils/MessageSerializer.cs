@@ -71,6 +71,9 @@ public static class MessageSerializer
             case MessageType.GameInfo:
                 message = JsonSerializer.Deserialize<GameInfoMessage>(json);
                 break;
+            case MessageType.AddCpuPlayer:
+                message = JsonSerializer.Deserialize<AddCpuPlayerMessage>(json);
+                break;
             default:
                 message = null;
                 break;

@@ -19,6 +19,7 @@ public static class MessageType
     public const string Welcome = "welcome";
     public const string GameOver = "game_over";
     public const string GameInfo = "game_info";
+    public const string AddCpuPlayer = "add_cpu_player";
     
     // Error messages
     public const string UnknownMessageType = "unknown_message_type";
