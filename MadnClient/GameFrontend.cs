@@ -134,6 +134,18 @@ namespace MadnClient
                         case ConsoleKey.Enter:
                             Console.WriteLine("Figur kann nur nach dem Würfeln bewegt werden.");
                             break;
+                        case ConsoleKey.C:
+                            if (_gameState != GameState.WaitingForStart)
+                            {
+                                Console.WriteLine("CPU Gegner können nur vor Spielstart hinzugefügt werden.");
+                                break;
+                            }
+                            
+                            Difficulty difficulty = ShowCpuDifficultyMenu();
+                            
+
+                            await SendAddCpuAsync(difficulty);
+                            break;
                         default:
                             Console.WriteLine("Unbekannte Option. 'B' zum Zurückkehren.");
                             break;
@@ -204,6 +216,26 @@ namespace MadnClient
             }
         }
         
+        private async Task SendAddCpuAsync(Difficulty difficulty)
+        {
+            try
+            {
+                var addCpuMessage = new AddCpuPlayerMessage()
+                {
+                    GameId = _gameId,
+                    Difficulty = difficulty
+                };
+
+                await SendMessageAsync(addCpuMessage);
+                Logger.LogInfo($"Sent AddCpuPlayer message");
+                _needsRedraw = true;
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError("Exception when sending AddCpuPlayer message: " + ex.Message);
+            }
+        }
+        
         private async Task SendStartGameAsync()
         {
             try
@@ -241,12 +273,37 @@ namespace MadnClient
                 {
                     Console.WriteLine($"Der Gewinner ist {ColorToString(_winnerColor.Value)}.");
                 }
-                Console.WriteLine("Drück 'b' um zum Menü zurück zu kehren.");
+                Console.WriteLine("Drücke 'b' um zum Menü zurück zu kehren.");
             }
             else
             {
                 Console.WriteLine();
                 ShowOptions();
+            }
+        }
+
+        private Difficulty ShowCpuDifficultyMenu()
+        {
+            Console.Clear();
+            Console.WriteLine("CPU Schwierigkeit auswählen:");
+            Console.WriteLine("1) Einfach");
+            Console.WriteLine("2) Mittel");
+            Console.WriteLine("3) Schwer");
+            while (true)
+            {
+                var key = Console.ReadKey(true);
+                switch (key.Key)
+                {
+                    case ConsoleKey.D1:
+                        return Difficulty.Easy;
+                    case ConsoleKey.D2:
+                        return Difficulty.Medium;
+                    case ConsoleKey.D3:
+                        return Difficulty.Hard;
+                    default:
+                        Console.WriteLine("Ungültige Auswahl. Bitte 1, 2 oder 3 drücken.");
+                        break;
+                }
             }
         }
 
@@ -277,6 +334,7 @@ namespace MadnClient
             if (_gameState == GameState.WaitingForStart && _yourColor == _adminColor)
             {
                 Console.WriteLine("S) Spiel starten");
+                Console.WriteLine("C) CPU Gegner hinzufügen");
             }
             if (_gameState == GameState.RollDice)
             {

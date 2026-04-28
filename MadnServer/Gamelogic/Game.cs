@@ -232,6 +232,8 @@ public class Game
                 Logger.LogError($"Invalid difficulty level {msg.Difficulty} for CPU player.");
                 return;
         }
+
+        cpuPlayer.Color = GetFirstUnusedColor();
         
         if (AddPlayer(cpuPlayer))
         {
@@ -262,6 +264,7 @@ public class Game
         fromPlayer.SendAsync(new DiceResultMessage
         {
             GameId = Id,
+            PlayerId = fromPlayer.Id,
             Value = diceValue,
             ValidMoves = validMoves
         });

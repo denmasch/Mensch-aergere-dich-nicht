@@ -1,7 +1,9 @@
 using System;
+using System.Threading;
 using System.Threading.Tasks;
 using MadnServer.Gamelogic;
 using MadnShared.Enums;
+using MadnShared.Logger;
 using MadnShared.Messages.Base;
 using MadnShared.Messages.ClientToServer;
 using MadnShared.Messages.ServerToClient;
@@ -31,7 +33,7 @@ public class CpuPlayerEasy : ICpuPlayer
         return Task.CompletedTask;
     }
 
-    private void HandleNextPlayer(NextPlayerMessage message)
+    private async void HandleNextPlayer(NextPlayerMessage message)
     {
         if (message.NextPlayerId != Id)
             return;
@@ -42,10 +44,10 @@ public class CpuPlayerEasy : ICpuPlayer
             PlayerId = Id
         };
         
-        MessageDispatcher.Dispatch(this, rollDiceMessage);
+        await MessageDispatcher.DispatchAsync(this, rollDiceMessage);
     }
 
-    private void HandleDiceResultMessage(DiceResultMessage message)
+    private async void HandleDiceResultMessage(DiceResultMessage message)
     {
         if (message.PlayerId != Id)
             return;
@@ -53,8 +55,7 @@ public class CpuPlayerEasy : ICpuPlayer
         if (message.ValidMoves.Count == 0)
             return;
         
-        var random = new Random();
-        int randomIndex = random.Next(message.ValidMoves.Count);
+        int randomIndex = Random.Shared.Next(message.ValidMoves.Count);
 
         MoveFigureMessage moveFigureMessage = new MoveFigureMessage
         {
@@ -64,6 +65,8 @@ public class CpuPlayerEasy : ICpuPlayer
             DiceRoll = message.Value
         };
         
-        MessageDispatcher.Dispatch(this, moveFigureMessage);
+        Thread.Sleep(1000);
+        
+        await MessageDispatcher.DispatchAsync(this, moveFigureMessage);
     }
 }
