@@ -49,7 +49,7 @@ namespace MadnServerTest
 
             // end match to write json
             StatsService.Instance.RecordTurnStart(_gameId, p.Id, DateTime.UtcNow);
-            StatsService.Instance.EndMatch(_gameId, DateTime.UtcNow).Wait();
+            StatsService.Instance.EndMatch(_gameId, DateTime.UtcNow, p.Id, p.Color).Wait();
 
             var msFile = Path.Combine(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..")), "MadnServer", "logs", "matches", _gameId + ".json");
             Assert.IsTrue(File.Exists(msFile));
@@ -58,11 +58,43 @@ namespace MadnServerTest
             var stats = System.Text.Json.JsonSerializer.Deserialize<MatchStats>(json);
             Assert.IsNotNull(stats);
             Assert.AreEqual(1, stats.TotalTurns); // one explicit RecordTurnStart in this test
+            Assert.AreEqual(GameStatus.Completed, stats.Status);
+            Assert.IsTrue(stats.EndTime.HasValue);
+            Assert.AreEqual(p.Id, stats.WinnerPlayerId);
+            Assert.AreEqual(p.Color, stats.WinnerColor);
 
             var ps = stats.Players.Find(x => x.PlayerId == p.Id);
             Assert.IsNotNull(ps);
-            Assert.AreEqual(2, ps.MovementCount);
+            Assert.AreEqual(10, ps.MovementCount);
             Assert.AreEqual(1, ps.Captures);
+        }
+
+        [TestMethod]
+        public void CancelMatch_WritesCanceledStatsWithoutWinner()
+        {
+            var p = new DummyPlayer { Color = Color.Red };
+            var players = new List<IPlayer> { p };
+            var gameId = Guid.NewGuid();
+
+            StatsService.Instance.StartMatch(gameId, players);
+            StatsService.Instance.RecordMove(gameId, p.Id, 1, 3, false, null, DateTime.UtcNow);
+            StatsService.Instance.CancelMatch(gameId, DateTime.UtcNow).Wait();
+
+            var msFile = Path.Combine(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..")), "MadnServer", "logs", "matches", gameId + ".json");
+            Assert.IsTrue(File.Exists(msFile));
+
+            var json = File.ReadAllText(msFile);
+            var stats = System.Text.Json.JsonSerializer.Deserialize<MatchStats>(json);
+            Assert.IsNotNull(stats);
+            Assert.AreEqual(GameStatus.Canceled, stats.Status);
+            Assert.IsTrue(stats.EndTime.HasValue);
+            Assert.IsNull(stats.WinnerPlayerId);
+            Assert.IsNull(stats.WinnerColor);
+
+            var ps = stats.Players.Find(x => x.PlayerId == p.Id);
+            Assert.IsNotNull(ps);
+            Assert.AreEqual(3, ps.MovementCount);
+            Assert.AreEqual(0, ps.Captures);
         }
     }
 }
