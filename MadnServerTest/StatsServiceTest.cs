@@ -7,6 +7,7 @@ using MadnShared.Enums;
 using MadnShared.Stats;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using MadnServerTest.Mocks;
 using MadnShared.Messages.Base;
 
 namespace MadnServerTest
@@ -15,13 +16,6 @@ namespace MadnServerTest
     public class StatsServiceTest
     {
         private Guid _gameId = Guid.NewGuid();
-
-        private class DummyPlayer : IPlayer
-        {
-            public Guid Id { get; } = Guid.NewGuid();
-            public Color Color { get; set; }
-            public Task SendAsync(IMessage message) { return Task.CompletedTask; }
-        }
 
         [TestInitialize]
         public void Init()
@@ -38,7 +32,7 @@ namespace MadnServerTest
         [TestMethod]
         public void RecordMove_IncrementsMovementCount_And_Captures()
         {
-            var p = new DummyPlayer { Color = Color.Green };
+            var p = new MockPlayer { Color = Color.Green };
             var players = new List<IPlayer> { p };
             StatsService.Instance.StartMatch(_gameId, players);
 
@@ -72,7 +66,7 @@ namespace MadnServerTest
         [TestMethod]
         public void CancelMatch_WritesCanceledStatsWithoutWinner()
         {
-            var p = new DummyPlayer { Color = Color.Red };
+            var p = new MockPlayer() { Color = Color.Red };
             var players = new List<IPlayer> { p };
             var gameId = Guid.NewGuid();
 
