@@ -340,25 +340,31 @@ public class ConsoleClient
 
     private string ShowGameList(ListGamesResponseMessage response)
     {
+        const string headerFormat = "│ {0,-3} │ {1,-36} │ {2,7} │";
         Console.Clear();
-        Console.WriteLine("Verfügbare Spiele:");
-        const string headerFormat = "| {0,-3} | {1,-36} | {2,7} |";
-        const string divider = "+-----+--------------------------------------+---------+";
-
-        Console.WriteLine(divider);
+        Console.WriteLine("┌──────────────────────────────────────────────────────┐");
+        Console.WriteLine("│ Verfügbare Spiele                                    │");
+        Console.WriteLine("├─────┬──────────────────────────────────────┬─────────┤");
         Console.WriteLine(headerFormat, "Nr.", "GameId", "Spieler");
-        Console.WriteLine(divider);
-
-        int i = 1;
-        foreach (var game in response.Games)
+        Console.WriteLine("├─────┼──────────────────────────────────────┼─────────┤");
+        
+        if (response.Games == null || response.Games.Count == 0)
         {
-            Console.WriteLine(headerFormat, i, game.Key, $"{game.Value}/4");
-            i++;
+            Console.WriteLine(headerFormat, "", "", "");
         }
-
-        Console.WriteLine(divider);
-        Console.WriteLine(
-            "Geben Sie eine Nummer ein, um einem Spiel beizutreten, oder 'b' um zurück zum Menü zu gehen:");
+        else
+        {
+            int i = 1;
+            foreach (var game in response.Games)
+            {
+                Console.WriteLine(headerFormat, i, game.Key, $"{game.Value}/4");
+                i++;
+            }
+        }
+        
+        Console.WriteLine("└─────┴──────────────────────────────────────┴─────────┘");
+        Console.WriteLine();
+        Console.WriteLine("Geben Sie eine Nummer ein, um einem Spiel beizutreten, oder 'b' um zurück zum Menü zu gehen:");
         var input = Console.ReadLine();
         return input ?? string.Empty;
     }
