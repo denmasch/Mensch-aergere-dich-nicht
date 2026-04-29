@@ -172,7 +172,7 @@ public class ConsoleClient
                 {
                     var ms = matches[i];
                     var winner = ms?.WinnerColor.HasValue == true ? ms.WinnerColor.Value.ToString() : "-";
-                    var start = ms?.StartTime.ToString("s") ?? "-";
+                    var start = ClientTime.FormatLocal(ms?.StartTime);
                     Console.WriteLine($"{i + 1,3} | {ms?.GameId,-36} | {start,-22} | {winner}");
                 }
 
@@ -207,8 +207,8 @@ public class ConsoleClient
         Console.WriteLine($"Match: {ms.GameId}\n");
 
         Console.WriteLine($"GameId: {ms.GameId}");
-        Console.WriteLine($"Start: {ms.StartTime}");
-        Console.WriteLine($"End: {ms.EndTime}");
+        Console.WriteLine($"Start: {ClientTime.FormatLocal(ms.StartTime)}");
+        Console.WriteLine($"End: {ClientTime.FormatLocal(ms.EndTime)}");
         Console.WriteLine($"TotalTurns: {ms.TotalTurns}");
         Console.WriteLine($"Winner: {(ms.WinnerColor.HasValue ? ms.WinnerColor.Value.ToString() : "-")} ({(ms.WinnerPlayerId.HasValue ? ms.WinnerPlayerId.ToString() : "-")})\n");
 
@@ -224,6 +224,7 @@ public class ConsoleClient
         Console.WriteLine("Drücke eine Taste um zurückzugehen...");
         Console.ReadKey(true);
     }
+
 
     private async Task SendMessageAsync(IMessage message)
     {

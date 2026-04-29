@@ -76,7 +76,7 @@ namespace MadnServer.Services
             return;
         }
 
-        // Record a move: increment MovementCount and Captures
+        // Record a move: increment MovementCount by steps and Captures
         public void RecordMove(Guid gameId, Guid playerId, int figureId, int steps, bool captured, int? capturedFigureId, DateTime time)
         {
             if (!_activeMatches.TryGetValue(gameId, out var ms))
@@ -85,8 +85,8 @@ namespace MadnServer.Services
             var ps = GetPlayerStats(ms, playerId);
             if (ps != null)
             {
-                // movement counter counts used dice rolls that resulted in moves
-                ps.MovementCount++;
+                // movement counter counts total tiles moved (sum of steps)
+                ps.MovementCount += steps;
                 if (captured) ps.Captures++;
             }
         }
@@ -102,10 +102,21 @@ namespace MadnServer.Services
 
         public async Task EndMatch(Guid gameId, DateTime endTime, Guid? winnerPlayerId = null, Color? winnerColor = null)
         {
+            await PersistMatch(gameId, endTime, GameStatus: MadnShared.Stats.GameStatus.Completed, winnerPlayerId, winnerColor);
+        }
+
+        public async Task CancelMatch(Guid gameId, DateTime endTime)
+        {
+            await PersistMatch(gameId, endTime, GameStatus: MadnShared.Stats.GameStatus.Canceled);
+        }
+
+        private async Task PersistMatch(Guid gameId, DateTime endTime, MadnShared.Stats.GameStatus GameStatus, Guid? winnerPlayerId = null, Color? winnerColor = null)
+        {
             if (!_activeMatches.TryRemove(gameId, out var ms))
                 return;
 
             ms.EndTime = endTime;
+            ms.Status = GameStatus;
 
             if (winnerPlayerId.HasValue)
                 ms.WinnerPlayerId = winnerPlayerId.Value;

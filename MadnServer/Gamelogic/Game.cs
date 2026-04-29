@@ -308,6 +308,7 @@ public class Game
     {
         var leaveIndex = Players.IndexOf(fromPlayer);
         var leaveColor = fromPlayer.Color;
+        bool wasGameStarted = _gameStarted;
 
         Broadcast(new GameLeftMessage
         {
@@ -333,6 +334,20 @@ public class Game
         if (Players.Count == 0)
         {
             _gameStarted = false;
+            // If game was started, save as canceled
+            if (wasGameStarted)
+            {
+                try
+                {
+                    Logger.LogInfo($"Persisting canceled game stats for {Id}...");
+                    StatsService.Instance.CancelMatch(Id, DateTime.UtcNow).GetAwaiter().GetResult();
+                    Logger.LogInfo($"Canceled game stats persisted for {Id}.");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Error while persisting canceled game stats for {Id}: {ex.Message}");
+                }
+            }
             GameManager.RemoveGame(Id);
             Logger.LogInfo($"Player {fromPlayer.Id} left. No players remaining. Game {Id} closed.");
             return;

@@ -4,6 +4,12 @@ using MadnShared.Enums;
 
 namespace MadnShared.Stats
 {
+    public enum GameStatus
+    {
+        Completed,  // Game finished normally with a winner
+        Canceled    // Game was canceled (all player left)
+    }
+
     public class MatchStats
     {
         public Guid GameId { get; set; }
@@ -16,5 +22,8 @@ namespace MadnShared.Stats
         // winner info (nullable if no winner / draw)
         public Guid? WinnerPlayerId { get; set; }
         public Color? WinnerColor { get; set; }
+        
+        // Game status: Completed or Canceled
+        public GameStatus Status { get; set; } = GameStatus.Completed;
     }
 }
