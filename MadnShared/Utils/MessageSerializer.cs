@@ -71,6 +71,12 @@ public static class MessageSerializer
             case MessageType.GameInfo:
                 message = JsonSerializer.Deserialize<GameInfoMessage>(json);
                 break;
+            case MessageType.ListMatchHistory:
+                message = JsonSerializer.Deserialize<ListMatchHistoryMessage>(json);
+                break;
+            case MessageType.MatchHistoryResponse:
+                message = JsonSerializer.Deserialize<MatchHistoryResponseMessage>(json);
+                break;
             default:
                 message = null;
                 break;

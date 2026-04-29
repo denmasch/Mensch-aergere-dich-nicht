@@ -6,6 +6,7 @@ using MadnShared.Messages.Base;
 using MadnShared.Messages.ClientToServer;
 using MadnShared.Messages.ServerToClient;
 using MadnShared.Messages.Errors;
+using MadnServer.Services;
 
 namespace MadnServer.Gamelogic;
 
@@ -68,6 +69,11 @@ public static class MessageDispatcher
             case ListGamesMessage listGamesMessage:
                 var games = GameManager.GetAllJoinableGames();
                 fromPlayer.SendAsync(new ListGamesResponseMessage { Games = games });
+                break;
+            case ListMatchHistoryMessage listMatchHistoryMessage:
+                // Fetch stored matches from StatsService and send back to client
+                var matches = StatsService.Instance.GetStoredMatches();
+                fromPlayer.SendAsync(new MatchHistoryResponseMessage { Matches = matches });
                 break;
             default:
                 Logger.LogError($"Unhandled lobby message type: {typeName}");

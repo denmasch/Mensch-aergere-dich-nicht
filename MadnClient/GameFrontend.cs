@@ -228,8 +228,8 @@ namespace MadnClient
             Console.Clear();
             Console.WriteLine($"Spiel: {_gameId} - Spieler: {_playerCount}/4");
             Console.WriteLine();
-            Console.WriteLine($"Admin: {ColorToString(_adminColor)}");
-            Console.WriteLine($"Deine Farbe: {ColorToString(_yourColor)}");
+            Console.WriteLine($"Admin: {ColorHelper.ColorToString(_adminColor)}");
+            Console.WriteLine($"Deine Farbe: {ColorHelper.ColorToString(_yourColor)}");
             Console.WriteLine($"Status: {Status()}");
             Console.WriteLine($"Würfel: {DiceRoll()}");
             DrawGameBoard(_currentGameboard);
@@ -239,7 +239,7 @@ namespace MadnClient
                 Console.WriteLine("Spiel vorbei!");
                 if (_winnerColor.HasValue)
                 {
-                    Console.WriteLine($"Der Gewinner ist {ColorToString(_winnerColor.Value)}.");
+                    Console.WriteLine($"Der Gewinner ist {ColorHelper.ColorToString(_winnerColor.Value)}.");
                 }
                 Console.WriteLine("Drück 'b' um zum Menü zurück zu kehren.");
             }
@@ -257,11 +257,11 @@ namespace MadnClient
                 case GameState.WaitingForStart:
                     return "Warte auf Spielstart";
                 case GameState.OpponentTurn:
-                    return $"Farbe am Zug: {ColorToString(_currentTurnColor)} (Der Gegner ist am Zug)";
+                    return $"Farbe am Zug: {ColorHelper.ColorToString(_currentTurnColor)} (Der Gegner ist am Zug)";
                 case GameState.RollDice:
-                    return $"Farbe am Zug: {ColorToString(_currentTurnColor)} (Du bist am Zug) - Würfeln!";
+                    return $"Farbe am Zug: {ColorHelper.ColorToString(_currentTurnColor)} (Du bist am Zug) - Würfeln!";
                 case GameState.MoveFigure:
-                    return $"Farbe am Zug: {ColorToString(_currentTurnColor)} (Du bist am Zug) - Figur bewegen!";
+                    return $"Farbe am Zug: {ColorHelper.ColorToString(_currentTurnColor)} (Du bist am Zug) - Figur bewegen!";
                 case GameState.GameOver:
                     return $"Spiel vorbei!";
                 default:
@@ -287,18 +287,6 @@ namespace MadnClient
                 Console.WriteLine("A/D) Figur auswählen");
                 Console.WriteLine("Enter) Figur bewegen");
             }
-        }
-        
-        private string ColorToString(Color color)
-        {
-            switch (color)
-            {
-                case Color.Yellow: return "Gelb";
-                case Color.Green: return "Grün";
-                case Color.Blue: return "Blau";
-                case Color.Red: return "Rot";
-            }
-            return "";
         }
         
         private string DiceRoll()
