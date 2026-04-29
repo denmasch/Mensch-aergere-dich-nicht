@@ -165,17 +165,20 @@ public class ConsoleClient
             while (true)
             {
                 Console.Clear();
-                Console.WriteLine("Matchhistory\n");
-                Console.WriteLine("Num | GameId                                 | StartTime               | Winner");
-                Console.WriteLine(new string('-', 80));
+                Console.WriteLine("┌──────────────────────────────────────────────────────────────────────────┐");
+                Console.WriteLine("│ Spielhistorie                                                            │");
+                Console.WriteLine("├─────┬──────────────────────────────────────┬──────────────────┬──────────┤");
+                Console.WriteLine("│ Num │ GameId                               │ Startzeit        │ Gewinner │");
+                Console.WriteLine("├─────┼──────────────────────────────────────┼──────────────────┼──────────┤");
                 for (int i = 0; i < matches.Count; i++)
                 {
                     var ms = matches[i];
                     var winner = ms?.WinnerColor.HasValue == true ? ms.WinnerColor.Value.ToString() : "-";
                     var start = ClientTime.FormatLocal(ms?.StartTime);
-                    Console.WriteLine($"{i + 1,3} | {ms?.GameId,-36} | {start,-22} | {winner}");
+                    Console.WriteLine($"│ {i + 1,3} │ {ms?.GameId,-36} │ {start,-16} │ {winner,-8} │");
                 }
-
+                Console.WriteLine("└─────┴──────────────────────────────────────┴──────────────────┴──────────┘");
+    
                 Console.WriteLine();
                 Console.WriteLine("Gib die Nummer eines Spiels ein, um Details anzusehen, oder 'b' um zurückzugehen:");
                 var input = Console.ReadLine();
