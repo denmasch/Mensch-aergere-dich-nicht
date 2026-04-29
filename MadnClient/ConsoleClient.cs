@@ -207,21 +207,23 @@ public class ConsoleClient
     private void ShowMatchDetailsFromStats(MatchStats ms)
     {
         Console.Clear();
-        Console.WriteLine($"Match: {ms.GameId}\n");
-
-        Console.WriteLine($"GameId: {ms.GameId}");
-        Console.WriteLine($"Start: {ClientTime.FormatLocal(ms.StartTime)}");
-        Console.WriteLine($"End: {ClientTime.FormatLocal(ms.EndTime)}");
-        Console.WriteLine($"TotalTurns: {ms.TotalTurns}");
-        Console.WriteLine($"Winner: {(ms.WinnerColor.HasValue ? ms.WinnerColor.Value.ToString() : "-")} ({(ms.WinnerPlayerId.HasValue ? ms.WinnerPlayerId.ToString() : "-")})\n");
-
-        Console.WriteLine("Players:");
-        Console.WriteLine("Color    MovementCount    Captures");
-        Console.WriteLine(new string('-', 40));
+        
+        Console.WriteLine($"┌───────────────────────────────────────────────────────────────┐");
+        Console.WriteLine($"│ Spieldetails                                                  │");
+        Console.WriteLine($"├──────────────┬────────────────────────────────────────────────┤");
+        Console.WriteLine($"│ GameId:      │ {ms.GameId,-46} │");
+        Console.WriteLine($"│ Startzeit:   │ {ClientTime.FormatLocal(ms.StartTime),-46} │");
+        Console.WriteLine($"│ Endzeit:     │ {ClientTime.FormatLocal(ms.EndTime),-46} │");
+        Console.WriteLine($"│ Anzahl Züge: │ {ms.TotalTurns,-46} │");
+        Console.WriteLine($"│ Gewinner:    │ {(ms.WinnerColor.HasValue ? ColorHelper.ColorToString(ms.WinnerColor.Value) : "-"),-46} │");
+        Console.WriteLine($"│ Spieler:     ├───────┬──────────────────┬─────────────────────┤");
+        Console.WriteLine($"│              │ Farbe │ Gelaufene Felder │ Geschlagene Figuren │");
+        Console.WriteLine($"│              ├───────┼──────────────────┼─────────────────────┤");
         foreach (var p in ms.Players)
         {
-            Console.WriteLine($"{p.Color,-8} {p.MovementCount,14} {p.Captures,12}");
+            Console.WriteLine($"│              │ {ColorHelper.ColorToString(p.Color),-5} │ {p.MovementCount,-16} │ {p.Captures,-19} │");
         }
+        Console.WriteLine($"└──────────────┴───────┴──────────────────┴─────────────────────┘");
 
         Console.WriteLine();
         Console.WriteLine("Drücke eine Taste um zurückzugehen...");
