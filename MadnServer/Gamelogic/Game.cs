@@ -238,9 +238,6 @@ public class Game
         var diceValue = Dice.RollDice();
         
         Logger.LogInfo($"Player {fromPlayer.Id} rolled a {diceValue} in game {Id}.");
-        
-        // record dice roll
-        StatsService.Instance.RecordDiceRoll(Id, fromPlayer.Id, diceValue, DateTime.UtcNow);
             
         var validMoves = Gameboard.GetValidMoves(fromPlayer.Color, diceValue);
         
@@ -256,8 +253,6 @@ public class Game
         if (validMoves.Count == 0)
         {
             Logger.LogInfo($"Player {fromPlayer.Id} has no valid moves and will skip their turn in game {Id}.");
-            // record unusable dice
-            StatsService.Instance.RecordUnusableDice(Id, fromPlayer.Id, diceValue, DateTime.UtcNow);
             NextPlayer();
         }
     }

@@ -62,20 +62,6 @@ namespace MadnServer.Services
             return ms.Players.Find(p => p.PlayerId == playerId);
         }
 
-        // legacy: record dice roll (no-op for simplified stats)
-        public void RecordDiceRoll(Guid gameId, Guid playerId, int diceValue, DateTime time)
-        {
-            // no longer tracked per requirement
-            return;
-        }
-
-        // legacy: record unusable dice (no-op)
-        public void RecordUnusableDice(Guid gameId, Guid playerId, int diceValue, DateTime time)
-        {
-            // no longer tracked
-            return;
-        }
-
         // Record a move: increment MovementCount by steps and Captures
         public void RecordMove(Guid gameId, Guid playerId, int figureId, int steps, bool captured, int? capturedFigureId, DateTime time)
         {
