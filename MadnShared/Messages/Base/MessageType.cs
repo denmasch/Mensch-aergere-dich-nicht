@@ -20,6 +20,10 @@ public static class MessageType
     public const string GameOver = "game_over";
     public const string GameInfo = "game_info";
     public const string AddCpuPlayer = "add_cpu_player";
+
+    // Match history
+    public const string ListMatchHistory = "list_match_history";
+    public const string MatchHistoryResponse = "match_history_response";
     
     // Error messages
     public const string UnknownMessageType = "unknown_message_type";

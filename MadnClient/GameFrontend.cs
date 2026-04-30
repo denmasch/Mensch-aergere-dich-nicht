@@ -258,26 +258,30 @@ namespace MadnClient
         private void ShowMenu()
         {
             Console.Clear();
-            Console.WriteLine($"Spiel: {_gameId} - Spieler: {_playerCount}/4");
-            Console.WriteLine();
-            Console.WriteLine($"Admin: {ColorToString(_adminColor)}");
-            Console.WriteLine($"Deine Farbe: {ColorToString(_yourColor)}");
-            Console.WriteLine($"Status: {Status()}");
-            Console.WriteLine($"Würfel: {DiceRoll()}");
+            Console.WriteLine($"┌────────────────────────────────────────────────────┐");
+            Console.WriteLine($"│ Spiel {_gameId}         │");
+            Console.WriteLine($"├──────────────┬─────────────────────────────────────┤");
+            Console.WriteLine($"│ Spieler:     │ {$"{_playerCount}/4",-35} │");
+            Console.WriteLine($"│ Admin:       │ {ColorHelper.ColorToString(_adminColor),-35} │");
+            Console.WriteLine($"│ Deine Farbe: │ {ColorHelper.ColorToString(_yourColor),-35} │");
+            Console.WriteLine($"│ Status:      │ {Status(),-35} │");
+            Console.WriteLine($"│ Würfel:      │ {DiceRoll(),-35} │");
+            Console.WriteLine($"├──────────────┴─────────────────────────────────────┤");
             DrawGameBoard(_currentGameboard);
+            Console.WriteLine($"├────────────────────────────────────────────────────┤");
             if (_gameState == GameState.GameOver)
-            {
-                Console.WriteLine();
-                Console.WriteLine("Spiel vorbei!");
+            { 
+                Console.WriteLine("│ Spiel vorbei!                                      │");
                 if (_winnerColor.HasValue)
                 {
-                    Console.WriteLine($"Der Gewinner ist {ColorToString(_winnerColor.Value)}.");
+                    Console.WriteLine($"│ {$"Der Gewinner ist {ColorHelper.ColorToString(_winnerColor.Value)}.",-42}         │");
                 }
+                Console.WriteLine("└────────────────────────────────────────────────────┘");
+                Console.WriteLine();
                 Console.WriteLine("Drücke 'b' um zum Menü zurück zu kehren.");
             }
             else
             {
-                Console.WriteLine();
                 ShowOptions();
             }
         }
@@ -314,11 +318,11 @@ namespace MadnClient
                 case GameState.WaitingForStart:
                     return "Warte auf Spielstart";
                 case GameState.OpponentTurn:
-                    return $"Farbe am Zug: {ColorToString(_currentTurnColor)} (Der Gegner ist am Zug)";
+                    return $"Farbe am Zug: {ColorHelper.ColorToString(_currentTurnColor)}";
                 case GameState.RollDice:
-                    return $"Farbe am Zug: {ColorToString(_currentTurnColor)} (Du bist am Zug) - Würfeln!";
+                    return $"Farbe am Zug: {ColorHelper.ColorToString(_currentTurnColor)} - Würfeln!";
                 case GameState.MoveFigure:
-                    return $"Farbe am Zug: {ColorToString(_currentTurnColor)} (Du bist am Zug) - Figur bewegen!";
+                    return $"Farbe am Zug: {ColorHelper.ColorToString(_currentTurnColor)} - Figur bewegen!";
                 case GameState.GameOver:
                     return $"Spiel vorbei!";
                 default:
@@ -328,35 +332,24 @@ namespace MadnClient
         
         private void ShowOptions()
         {
-            Console.WriteLine();
-            Console.WriteLine("Optionen:");
-            Console.WriteLine("B) Spiel verlassen");
+            Console.WriteLine("│ Optionen                                           │");
+            Console.WriteLine("├────────────────────────────────────────────────────┤");
+            Console.WriteLine("│ B) Spiel verlassen                                 │");
             if (_gameState == GameState.WaitingForStart && _yourColor == _adminColor)
             {
-                Console.WriteLine("S) Spiel starten");
-                Console.WriteLine("C) CPU Gegner hinzufügen");
+                Console.WriteLine("│ S) Spiel starten                                   │");
+                Console.WriteLine("│ C) CPU Gegner hinzufügen                           │");
             }
             if (_gameState == GameState.RollDice)
             {
-                Console.WriteLine("W) Würfeln");
+                Console.WriteLine("│ W) Würfeln                                         │");
             }
             if (_gameState == GameState.MoveFigure)
             {
-                Console.WriteLine("A/D) Figur auswählen");
-                Console.WriteLine("Enter) Figur bewegen");
+                Console.WriteLine("│ A/D) Figur auswählen                               │");
+                Console.WriteLine("│ Enter) Figur bewegen                               │");
             }
-        }
-        
-        private string ColorToString(Color color)
-        {
-            switch (color)
-            {
-                case Color.Yellow: return "Gelb";
-                case Color.Green: return "Grün";
-                case Color.Blue: return "Blau";
-                case Color.Red: return "Rot";
-            }
-            return "";
+            Console.WriteLine("└────────────────────────────────────────────────────┘");
         }
         
         private string DiceRoll()
@@ -379,13 +372,14 @@ namespace MadnClient
 
             for (int y = 0; y < 11; y++)
             {
+                sb.Append("│ ");
                 for (int x = 0; x < 11; x++)
                 {
                     sb.Append(RenderTileString(x, y, board));
                     sb.Append(" ");
                 }
                 sb.Append("\x1b[0m"); // ansi reset 
-                sb.AppendLine();
+                sb.AppendLine("                  │");
             }
 
             Console.Write(sb.ToString());

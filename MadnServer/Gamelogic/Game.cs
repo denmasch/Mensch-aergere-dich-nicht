@@ -9,6 +9,7 @@ using MadnShared.Messages.ServerToClient;
 using MadnShared.Enums;
 using MadnShared.Logger;
 using MadnShared.Messages.Errors;
+using MadnServer.Services;
 
 namespace MadnServer.Gamelogic;
 
@@ -91,6 +92,11 @@ public class Game
             NextPlayerColor = Players[_currentPlayerIndex].Color
         });
         Logger.LogInfo($"Game {Id} started with {Players.Count} players.");
+
+        // start stats collection for this match
+        StatsService.Instance.StartMatch(Id, Players);
+        // record first turn start
+        StatsService.Instance.RecordTurnStart(Id, Players[_currentPlayerIndex].Id, DateTime.UtcNow);
     }
     
     private bool CheckGameOver()
@@ -105,9 +111,23 @@ public class Game
                 WinnerPlayerId = winner.Id,
                 WinnerColor = winner.Color
             });
-            
+
             Logger.LogInfo($"Game {Id} is over. Player {winner.Id} ({winner.Color}) wins!");
             _gameStarted = false;
+
+            // end stats collection and persist
+            try
+            {
+                Logger.LogInfo($"Persisting stats for finished game {Id}...");
+                // wait for the async persistence to finish to ensure the JSON is written
+                StatsService.Instance.EndMatch(Id, DateTime.UtcNow, winner.Id, winner.Color).GetAwaiter().GetResult();
+                Logger.LogInfo($"Stats persisted for game {Id}.");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError($"Error while persisting stats for game {Id}: {ex.Message}");
+            }
+
             GameManager.RemoveGame(Id);
         }
 
@@ -206,6 +226,9 @@ public class Game
             NextPlayerId = next.Id,
             NextPlayerColor = next.Color
         });
+
+        // record turn start
+        StatsService.Instance.RecordTurnStart(Id, next.Id, DateTime.UtcNow);
     }
     private void HandleAddCpuPlayer(IPlayer fromPlayer, AddCpuPlayerMessage msg)
     {
@@ -285,8 +308,11 @@ public class Game
         var col = fromPlayer.Color;
 
         var fig = Gameboard.GetFigure(col, figId);
-        Gameboard.MoveFigure(fig, col, msg.DiceRoll);
-        
+        var moveResult = Gameboard.MoveFigureResult(fig, col, msg.DiceRoll);
+
+        // record move and capture if any
+        StatsService.Instance.RecordMove(Id, fromPlayer.Id, figId, msg.DiceRoll, moveResult.Captured, moveResult.CapturedFigureId, DateTime.UtcNow);
+
         Broadcast(new GameboardUpdatedMessage
         {
             GameId = Id,
@@ -319,6 +345,7 @@ public class Game
     {
         var leaveIndex = Players.IndexOf(fromPlayer);
         var leaveColor = fromPlayer.Color;
+        bool wasGameStarted = _gameStarted;
 
         Broadcast(new GameLeftMessage
         {
@@ -344,6 +371,20 @@ public class Game
         if (Players.Count == 0)
         {
             _gameStarted = false;
+            // If game was started, save as canceled
+            if (wasGameStarted)
+            {
+                try
+                {
+                    Logger.LogInfo($"Persisting canceled game stats for {Id}...");
+                    StatsService.Instance.CancelMatch(Id, DateTime.UtcNow).GetAwaiter().GetResult();
+                    Logger.LogInfo($"Canceled game stats persisted for {Id}.");
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError($"Error while persisting canceled game stats for {Id}: {ex.Message}");
+                }
+            }
             GameManager.RemoveGame(Id);
             Logger.LogInfo($"Player {fromPlayer.Id} left. No players remaining. Game {Id} closed.");
             return;

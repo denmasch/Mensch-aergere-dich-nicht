@@ -201,12 +201,13 @@ public class Gameboard
         return figures.First(f => f.Id == id);
     }
     
-    public bool MoveFigure(Figure fig, Color activePlayer, int diceRollCount )
+    public MadnServer.Gamelogic.MoveResult MoveFigureResult(Figure fig, Color activePlayer, int diceRollCount )
     {
+        var result = new MadnServer.Gamelogic.MoveResult { Success = false, Captured = false, CapturedFigureId = null };
         bool movementAllowed = MoveValidator.ValidateMove(this, fig, activePlayer, diceRollCount);
         if (!movementAllowed)
         {
-            return false;
+            return result;
         }
 
         // Case 1: Figure is in Home (dice roll is 6)
@@ -220,12 +221,16 @@ public class Gameboard
 
             if (destTile.IsOccupied)
             {
+                var capturedFig = destTile.OccupyingFigure;
+                result.Captured = true;
+                result.CapturedFigureId = capturedFig?.Id;
                 KickFigure(destTile.OccupyingFigure);
             }
 
             destTile.OccupyingFigure = fig;
             fig.IsHome = false;
-            return true;
+            result.Success = true;
+            return result;
         }
 
         // Case 2: Figure is on the Path or in the Target
@@ -250,25 +255,30 @@ public class Gameboard
                 var destTile = Path[newIndex];
                 if (destTile.IsOccupied)
                 {
+                    var capturedFig = destTile.OccupyingFigure;
+                    result.Captured = true;
+                    result.CapturedFigureId = capturedFig?.Id;
                     KickFigure(destTile.OccupyingFigure);
                 }
 
                 Path[currentPathIndex].OccupyingFigure = null;
                 destTile.OccupyingFigure = fig;
-                return true;
+                result.Success = true;
+                return result;
             }
             else
             {
                 // move into target
                 int stepsIntoTarget = totalDistanceAfterMove - (PathLength - 1);
                 int targetIndex = stepsIntoTarget - 1; // 0-based
-                
+
                 var targetTiles = Targets[fig.Color];
                 var destTargetTile = targetTiles[targetIndex];
 
                 Path[currentPathIndex].OccupyingFigure = null;
                 destTargetTile.OccupyingFigure = fig;
-                return true;
+                result.Success = true;
+                return result;
             }
         }
         else if (currentTargetIndex >= 0)
@@ -277,15 +287,22 @@ public class Gameboard
             int newTargetIndex = currentTargetIndex + diceRollCount;
             var targetTiles = Targets[fig.Color];
             var destTargetTile = targetTiles[newTargetIndex];
-            
+
             targetTiles[currentTargetIndex].OccupyingFigure = null;
             destTargetTile.OccupyingFigure = fig;
-            
-            return true;
+
+            result.Success = true;
+            return result;
         }
 
         // could not find figure
-        return false;
+        return result;
+    }
+
+    public bool MoveFigure(Figure fig, Color activePlayer, int diceRollCount )
+    {
+        var res = MoveFigureResult(fig, activePlayer, diceRollCount);
+        return res.Success;
     }
 
 
