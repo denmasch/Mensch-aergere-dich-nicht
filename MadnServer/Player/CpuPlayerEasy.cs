@@ -44,6 +44,8 @@ public class CpuPlayerEasy : ICpuPlayer
             PlayerId = Id
         };
         
+        Thread.Sleep(500);
+        
         await MessageDispatcher.DispatchAsync(this, rollDiceMessage);
     }
 
@@ -64,8 +66,6 @@ public class CpuPlayerEasy : ICpuPlayer
             FigureId = message.ValidMoves[randomIndex].FigureIndex,
             DiceRoll = message.Value
         };
-        
-        Thread.Sleep(1000);
         
         await MessageDispatcher.DispatchAsync(this, moveFigureMessage);
     }
