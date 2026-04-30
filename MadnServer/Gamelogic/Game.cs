@@ -368,7 +368,7 @@ public class Game
 
         Players.RemoveAt(leaveIndex);
 
-        if (Players.Count == 0)
+        if (Players.Count == 0 || Players.All(p => p is ICpuPlayer))
         {
             _gameStarted = false;
             // If game was started, save as canceled

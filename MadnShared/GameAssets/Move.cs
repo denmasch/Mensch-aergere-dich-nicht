@@ -6,4 +6,6 @@ public class Move
     
     // Number of steps to move the figure.
     public int Steps { get; set; }
+    
+    public bool IsCapture { get; set; }
 }
