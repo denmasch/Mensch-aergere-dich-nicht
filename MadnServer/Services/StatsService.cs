@@ -117,12 +117,12 @@ namespace MadnServer.Services
             await sem.WaitAsync();
             try
             {
-                var fname = Path.Combine(_outDir, gameId + ".json");
+                var path = Path.Combine(_outDir, gameId + ".json");
                 var opts = new JsonSerializerOptions { WriteIndented = true };
                 var json = JsonSerializer.Serialize(ms, opts);
-                await File.WriteAllTextAsync(fname, json);
+                await File.WriteAllTextAsync(path, json);
                 
-                Logger.LogInfo($"Stats written to: {Path.GetFullPath(fname)}");
+                Logger.LogInfo($"Stats written to: {Path.GetFullPath(path)}");
             }
             catch (Exception ex)
             {
