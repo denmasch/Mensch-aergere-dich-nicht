@@ -122,7 +122,9 @@ public class ConsoleClient
     private void ShowWelcome()
     {
         Console.Clear();
-        Console.WriteLine("Willkommen zu Mensch ärgere dich nicht");
+        Console.WriteLine("┌────────────────────────────────────────┐");
+        Console.WriteLine("│ Willkommen zu Mensch ärgere dich nicht │");
+        Console.WriteLine("└────────────────────────────────────────┘");
         Console.WriteLine();
         Console.WriteLine("Beliebige Taste drücken...");
     }
@@ -130,11 +132,15 @@ public class ConsoleClient
     private string ShowMenu()
     {
         Console.Clear();
-        Console.WriteLine("Menü:");
-        Console.WriteLine("1) Spiel erstellen");
-        Console.WriteLine("2) Spiel beitreten");
-        Console.WriteLine("3) Matchhistory");
-        Console.WriteLine("Q) Beenden");
+        Console.WriteLine("┌────────────────────────────────────────┐");
+        Console.WriteLine("│ Menü                                   │");
+        Console.WriteLine("├────────────────────────────────────────┤");
+        Console.WriteLine("│ 1) Spiel erstellen                     │");
+        Console.WriteLine("│ 2) Spiel beitreten                     │");
+        Console.WriteLine("│ 3) Spielhistorie                       │");
+        Console.WriteLine("│ Q) Beenden                             │");
+        Console.WriteLine("└────────────────────────────────────────┘");
+        Console.WriteLine();
         Console.Write("Auswahl: ");
         var key = Console.ReadKey(true);
         Console.WriteLine(key.KeyChar);
