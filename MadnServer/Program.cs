@@ -78,7 +78,7 @@ class Program
                         if (msg is null)
                             continue;
 
-                        MessageDispatcher.Dispatch(player, msg);
+                        MessageDispatcher.DispatchAsync(player, msg);
                     }
                 }
                 catch (Exception ex)

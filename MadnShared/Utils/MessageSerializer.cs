@@ -77,6 +77,9 @@ public static class MessageSerializer
             case MessageType.MatchHistoryResponse:
                 message = JsonSerializer.Deserialize<MatchHistoryResponseMessage>(json);
                 break;
+            case MessageType.AddCpuPlayer:
+                message = JsonSerializer.Deserialize<AddCpuPlayerMessage>(json);
+                break;
             default:
                 message = null;
                 break;

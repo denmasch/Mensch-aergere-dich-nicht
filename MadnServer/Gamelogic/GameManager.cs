@@ -57,6 +57,11 @@ public static class GameManager
             {
                 Logger.LogInfo($"Removing player {player.Id} from game {game.Id} due to disconnect.");
                 game.RemovePlayer(player);
+                // Remove the game if all remaining players are CPU players
+                if (game.Players.All(p => p is ICpuPlayer))
+                {
+                   RemoveGame(game.Id);
+                }
                 break;
             }
         }

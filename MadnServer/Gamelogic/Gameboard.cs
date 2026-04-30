@@ -347,10 +347,13 @@ public class Gameboard
         {
             if (MoveValidator.ValidateMove(this, f, color, diceRollCount))
             {
+                var resIndex = (FindPathIndex(f) + diceRollCount) % PathLength;
+                bool isCapture = Path[resIndex].IsOccupied;
                 result.Add(new Move
                 {
                     FigureIndex = f.Id,
-                    Steps = diceRollCount
+                    Steps = diceRollCount,
+                    IsCapture = isCapture
                 });
             }
         }

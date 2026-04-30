@@ -1,4 +1,5 @@
 using System;
+using System.Threading.Tasks;
 using MadnServer.Player;
 using MadnShared.Enums;
 using MadnShared.Logger;
@@ -12,7 +13,7 @@ namespace MadnServer.Gamelogic;
 
 public static class MessageDispatcher
 {
-    public static void Dispatch(IPlayer fromPlayer, IMessage message)
+    public static async Task DispatchAsync(IPlayer fromPlayer, IMessage message)
     {
         if (message == null)
             return;
@@ -29,22 +30,22 @@ public static class MessageDispatcher
             else
             {
                 Logger.LogInfo($"No game found with id {gameMessage.GameId}. Sending error to sender.");
-                fromPlayer.SendAsync(new UnknownMessageTypeMessage());
+                await fromPlayer.SendAsync(new UnknownMessageTypeMessage());
             }
             return;
         }
 
         if (message is ILobbyMessage lobbyMessage)
         {
-            HandleLobbyMessage(fromPlayer, lobbyMessage);
+            await HandleLobbyMessageAsync(fromPlayer, lobbyMessage);
             return;
         }
 
         Logger.LogError($"Received unknown message type: {message.GetType().Name}");
-        fromPlayer.SendAsync(new UnknownMessageTypeMessage());
+        await fromPlayer.SendAsync(new UnknownMessageTypeMessage());
     }
 
-    private static void HandleLobbyMessage(IPlayer fromPlayer, ILobbyMessage lobbyMessage)
+    private static async Task HandleLobbyMessageAsync(IPlayer fromPlayer, ILobbyMessage lobbyMessage)
     {
         var typeName = lobbyMessage.GetType().Name;
 
@@ -57,18 +58,18 @@ public static class MessageDispatcher
             case CreateGameMessage createGameMessage:
                 game = GameManager.CreateGame(fromPlayer);
                 color = game.Players.Find(p => p.Id == fromPlayer.Id).Color;
-                fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id , Gameboard = game.Gameboard.ToDto(), Color = color });
-                fromPlayer.SendAsync(new GameInfoMessage() {GameId = game.Id, AdminColor = game.Players[0].Color, PlayerCount = game.Players.Count});
+                await fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id , Gameboard = game.Gameboard.ToDto(), Color = color });
+                await fromPlayer.SendAsync(new GameInfoMessage() {GameId = game.Id, AdminColor = game.Players[0].Color, PlayerCount = game.Players.Count});
                 break;
             case JoinGameMessage joinGameMessage:
                 game = GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
                 color = game.Players.Find(p => p.Id == fromPlayer.Id).Color;
-                fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId , Gameboard = game.Gameboard.ToDto(), Color = color });
-                fromPlayer.SendAsync(new GameInfoMessage() {GameId = game.Id, AdminColor = game.Players[0].Color, PlayerCount = game.Players.Count});
+                await fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId , Gameboard = game.Gameboard.ToDto(), Color = color });
+                await fromPlayer.SendAsync(new GameInfoMessage() {GameId = game.Id, AdminColor = game.Players[0].Color, PlayerCount = game.Players.Count});
                 break;
             case ListGamesMessage listGamesMessage:
                 var games = GameManager.GetAllJoinableGames();
-                fromPlayer.SendAsync(new ListGamesResponseMessage { Games = games });
+                await fromPlayer.SendAsync(new ListGamesResponseMessage { Games = games });
                 break;
             case ListMatchHistoryMessage listMatchHistoryMessage:
                 // Fetch stored matches from StatsService and send back to client
