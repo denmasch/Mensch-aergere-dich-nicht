@@ -289,10 +289,14 @@ namespace MadnClient
         private Difficulty ShowCpuDifficultyMenu()
         {
             Console.Clear();
-            Console.WriteLine("CPU Schwierigkeit auswählen:");
-            Console.WriteLine("1) Einfach");
-            Console.WriteLine("2) Mittel");
-            Console.WriteLine("3) Schwer");
+            Console.WriteLine("┌─────────────────────────────┐");
+            Console.WriteLine("│ CPU Schwierigkeit auswählen │");
+            Console.WriteLine("├─────────────────────────────┤");
+            Console.WriteLine("│ 1) Einfach                  │");
+            Console.WriteLine("│ 2) Mittel                   │");   
+            Console.WriteLine("│ 3) Schwer                   │");
+            Console.WriteLine("└─────────────────────────────┘");
+            Console.WriteLine();
             while (true)
             {
                 var key = Console.ReadKey(true);
