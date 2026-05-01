@@ -5,6 +5,7 @@ class Gameboard {
     + ToDto() : GameboardDTO
     + IsPlayerWinner(color:Color) : bool
     + GetFigure(color:Color, id:int) : Figure
+    + MoveFigureResult(fig:Figure, activePlayer:Color, diceRollCount:int) : MadnServer.Gamelogic.MoveResult
     + MoveFigure(fig:Figure, activePlayer:Color, diceRollCount:int) : bool
     + GetStartIndexForColor(color:Color) : int
     + GetValidMoves(color:Color, diceRollCount:int) : List<Move>

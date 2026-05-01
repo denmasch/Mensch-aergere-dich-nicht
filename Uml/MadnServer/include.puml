@@ -1,19 +1,21 @@
 @startuml
 !include ./Program.puml
-!include ./Player/ICpuPlayer.puml
+!include ./Player/IPlayer.puml
+!include ./Player/RealPlayer.puml
 !include ./Player/CpuPlayerEasy.puml
 !include ./Player/CpuPlayerHard.puml
 !include ./Player/CpuPlayerMedium.puml
-!include ./Player/IPlayer.puml
-!include ./Player/RealPlayer.puml
+!include ./Player/ICpuPlayer.puml
 !include ./Gamelogic/Dice.puml
 !include ./Gamelogic/Figure.puml
-!include ./Gamelogic/Gameboard.puml
 !include ./Gamelogic/Tile.puml
 !include ./Gamelogic/MoveValidator.puml
-!include ./Gamelogic/Game.puml
 !include ./Gamelogic/GameManager.puml
+!include ./Gamelogic/Game.puml
+!include ./Gamelogic/Gameboard.puml
 !include ./Gamelogic/MessageDispatcher.puml
+!include ./Gamelogic/MoveResult.puml
+!include ./Services/StatsService.puml
 !include ./obj/Debug/net9.0/mensch-ängere-dich-nicht.GlobalUsings.g.puml
 !include ./obj/Debug/net9.0/.NETCoreApp,Version=v9.0.AssemblyAttributes.puml
 !include ./obj/Debug/net9.0/mensch-ängere-dich-nicht.AssemblyInfo.puml

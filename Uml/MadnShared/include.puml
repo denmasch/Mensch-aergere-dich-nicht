@@ -1,6 +1,7 @@
 @startuml
 !include ./Enums/Color.puml
 !include ./Enums/TileType.puml
+!include ./Enums/Difficulty.puml
 !include ./Utils/MessageSerializer.puml
 !include ./GameAssets/FigureDTO.puml
 !include ./GameAssets/GameboardDTO.puml
@@ -11,6 +12,8 @@
 !include ./Logger/ILogWriter.puml
 !include ./Logger/LogLevel.puml
 !include ./Logger/Logger.puml
+!include ./Stats/MatchStats.puml
+!include ./Stats/PlayerStats.puml
 !include ./Messages/Base/IGameMessage.puml
 !include ./Messages/Base/ILobbyMessage.puml
 !include ./Messages/Base/IMessage.puml
@@ -22,6 +25,8 @@
 !include ./Messages/ClientToServer/MoveFigureMessage.puml
 !include ./Messages/ClientToServer/RollDiceMessage.puml
 !include ./Messages/ClientToServer/StartGameMessage.puml
+!include ./Messages/ClientToServer/AddCpuPlayerMessage.puml
+!include ./Messages/ClientToServer/ListMatchHistoryMessage.puml
 !include ./Messages/Errors/UnknownMessageTypeMessage.puml
 !include ./Messages/ServerToClient/DiceResultMessage.puml
 !include ./Messages/ServerToClient/GameCreatedMessage.puml
@@ -33,6 +38,7 @@
 !include ./Messages/ServerToClient/ListGamesResponseMessage.puml
 !include ./Messages/ServerToClient/NextPlayerMessage.puml
 !include ./Messages/ServerToClient/WelcomeMessage.puml
+!include ./Messages/ServerToClient/MatchHistoryResponseMessage.puml
 !include ./obj/Debug/net9.0/MadnShared.GlobalUsings.g.puml
 !include ./obj/Debug/net9.0/.NETCoreApp,Version=v9.0.AssemblyAttributes.puml
 !include ./obj/Debug/net9.0/MadnShared.AssemblyInfo.puml

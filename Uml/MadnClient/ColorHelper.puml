@@ -1,0 +1,5 @@
+@startuml
+class ColorHelper <<static>> {
+    + {static} ColorToString(color:Color) : string
+}
+@enduml

@@ -1,6 +1,6 @@
 @startuml
 class CpuPlayerMedium {
-    + SendAsync(message:IMessage) : Task
+    + <<async>> SendAsync(message:IMessage) : Task
 }
 ICpuPlayer <|-- CpuPlayerMedium
 CpuPlayerMedium --> "Color" Color

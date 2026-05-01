@@ -17,6 +17,9 @@ class MessageType <<static>> {
     + <<const>> Welcome : string = "welcome"
     + <<const>> GameOver : string = "game_over"
     + <<const>> GameInfo : string = "game_info"
+    + <<const>> AddCpuPlayer : string = "add_cpu_player"
+    + <<const>> ListMatchHistory : string = "list_match_history"
+    + <<const>> MatchHistoryResponse : string = "match_history_response"
     + <<const>> UnknownMessageType : string = "unknown_message_type"
 }
 @enduml

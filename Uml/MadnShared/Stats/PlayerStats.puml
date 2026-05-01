@@ -1,0 +1,8 @@
+@startuml
+class PlayerStats {
+    + MovementCount : int <<get>> <<set>>
+    + Captures : int <<get>> <<set>>
+}
+PlayerStats --> "PlayerId" Guid
+PlayerStats --> "Color" Color
+@enduml

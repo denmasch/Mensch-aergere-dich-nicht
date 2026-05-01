@@ -1,0 +1,8 @@
+@startuml
+class AddCpuPlayerMessage {
+    + Type : string <<get>>
+}
+IGameMessage <|-- AddCpuPlayerMessage
+AddCpuPlayerMessage --> "GameId" Guid
+AddCpuPlayerMessage --> "Difficulty" Difficulty
+@enduml

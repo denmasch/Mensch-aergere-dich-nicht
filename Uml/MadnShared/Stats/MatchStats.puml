@@ -1,0 +1,18 @@
+@startuml
+enum GameStatus {
+    Completed,
+    Canceled,
+}
+class MatchStats {
+    + TotalTurns : int <<get>> <<set>>
+}
+class "List`1"<T> {
+}
+MatchStats --> "GameId" Guid
+MatchStats --> "StartTime" DateTime
+MatchStats --> "EndTime" DateTime
+MatchStats o-> "Players<PlayerStats>" "List`1"
+MatchStats --> "WinnerPlayerId" Guid
+MatchStats --> "WinnerColor" Color
+MatchStats o-> "Status" GameStatus
+@enduml

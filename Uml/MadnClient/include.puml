@@ -2,8 +2,10 @@
 !include ./GameState.puml
 !include ./IWebSocketClient.puml
 !include ./WebSocketClient.puml
-!include ./Program.puml
 !include ./AnsiColor.puml
+!include ./Program.puml
+!include ./ClientTime.puml
+!include ./ColorHelper.puml
 !include ./ConsoleClient.puml
 !include ./GameFrontend.puml
 !include ./obj/Debug/net9.0/maednClient.GlobalUsings.g.puml

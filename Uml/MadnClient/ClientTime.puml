@@ -1,0 +1,6 @@
+@startuml
+class ClientTime <<static>> {
+    + {static} FormatLocal(utcTime:DateTime?) : string
+    + {static} ToLocal(utcTime:DateTime) : DateTime
+}
+@enduml

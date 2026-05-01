@@ -1,5 +1,5 @@
 @startuml
 class MessageDispatcher <<static>> {
-    + {static} Dispatch(fromPlayer:IPlayer, message:IMessage) : void
+    + {static} <<async>> DispatchAsync(fromPlayer:IPlayer, message:IMessage) : Task
 }
 @enduml

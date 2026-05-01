@@ -1,0 +1,9 @@
+@startuml
+class MatchHistoryResponseMessage {
+    + Type : string <<get>>
+}
+class "List`1"<T> {
+}
+ILobbyMessage <|-- MatchHistoryResponseMessage
+MatchHistoryResponseMessage o-> "Matches<MatchStats>" "List`1"
+@enduml

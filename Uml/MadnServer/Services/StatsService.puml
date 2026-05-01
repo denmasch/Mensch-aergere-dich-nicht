@@ -1,0 +1,12 @@
+@startuml
+class StatsService {
+    + SetOutputDirectory(outDir:string) : void
+    + StartMatch(gameId:Guid, players:IEnumerable<IPlayer>) : void
+    + RecordMove(gameId:Guid, playerId:Guid, figureId:int, steps:int, captured:bool, capturedFigureId:int?, time:DateTime) : void
+    + RecordTurnStart(gameId:Guid, playerId:Guid, time:DateTime) : void
+    + <<async>> EndMatch(gameId:Guid, endTime:DateTime, winnerPlayerId:Guid?, winnerColor:Color?) : Task
+    + <<async>> CancelMatch(gameId:Guid, endTime:DateTime) : Task
+    + GetStoredMatches() : List<MatchStats>
+}
+StatsService --> "Instance" StatsService
+@enduml

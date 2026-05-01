@@ -1,0 +1,6 @@
+@startuml
+class ListMatchHistoryMessage {
+    + Type : string <<get>>
+}
+ILobbyMessage <|-- ListMatchHistoryMessage
+@enduml

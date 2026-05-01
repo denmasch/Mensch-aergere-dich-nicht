@@ -1,0 +1,7 @@
+@startuml
+class MoveResult {
+    + Success : bool <<get>> <<set>>
+    + Captured : bool <<get>> <<set>>
+    + CapturedFigureId : int? <<get>> <<set>>
+}
+@enduml
