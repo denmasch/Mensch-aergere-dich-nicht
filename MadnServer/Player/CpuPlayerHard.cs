@@ -21,6 +21,13 @@ public class CpuPlayerHard : ICpuPlayer
     
     public Guid Id { get; } = Guid.NewGuid();
     
+    private readonly Game _game;
+    
+    public CpuPlayerHard(Game game)
+    {
+        _game = game;
+    }
+    
     public async Task SendAsync(IMessage message)
     {
         switch (message)
@@ -47,7 +54,7 @@ public class CpuPlayerHard : ICpuPlayer
         
         Thread.Sleep(500);
         
-        await MessageDispatcher.DispatchAsync(this, rollDiceMessage);
+        _game.HandleMessage(this, rollDiceMessage);
     }
     
     private async Task HandleDiceResultMessage(DiceResultMessage message)
@@ -78,6 +85,6 @@ public class CpuPlayerHard : ICpuPlayer
             DiceRoll = message.Value
         };
         
-        await MessageDispatcher.DispatchAsync(this, moveFigureMessage);
+        _game.HandleMessage(this, moveFigureMessage);
     }
 }

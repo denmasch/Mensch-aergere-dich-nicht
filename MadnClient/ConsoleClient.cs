@@ -16,6 +16,7 @@ namespace MadnClient;
 
 public class ConsoleClient
 {
+    private readonly ILogger _logger;
     private Guid _playerId = Guid.Empty;
     private TaskCompletionSource<ListGamesResponseMessage> _listGamesTcs;
     private TaskCompletionSource<GameCreatedMessage> _createGameTcs;
@@ -25,11 +26,12 @@ public class ConsoleClient
     private TaskCompletionSource<Guid> _welcomeTcs;
     private TaskCompletionSource<MatchHistoryResponseMessage> _matchHistoryTcs;
 
-    public ConsoleClient(IWebSocketClient wsClient)
+    public ConsoleClient(IWebSocketClient wsClient, ILogger logger)
     {
         _wsClient = wsClient;
         _wsClient.MessageReceived += OnWsMessageReceived;
         _welcomeTcs = new TaskCompletionSource<Guid>();
+        _logger = logger;
     }
 
     public async Task RunAsync(string serverUri)
@@ -45,16 +47,16 @@ public class ConsoleClient
             {
                 Console.Clear();
                 Console.WriteLine("Erstelle Spiel ...");
-                Logger.LogInfo("Requested to create game");
+                _logger.LogInfo("Requested to create game");
                 var response = await SendCreateGameAsync();
                 if (response == null)
                 {
                     Console.WriteLine("Spiel konnte nicht erstellt werden.");
-                    Logger.LogError("Failed to create game");
+                    _logger.LogError("Failed to create game");
                 }
                 else
                 {
-                    _frontend = new GameFrontend(_wsClient, _playerId, response.Color, response.Gameboard);
+                    _frontend = new GameFrontend(_wsClient, _playerId, response.Color, response.Gameboard, _logger);
                     await _frontend.EnterGameAsync(response.GameId);
                 }
 
@@ -64,7 +66,7 @@ public class ConsoleClient
                 var response = await ListGamesAsync();
                 if (response.Games == null)
                 {
-                    Logger.LogError("Failed to get game list from server.");
+                    _logger.LogError("Failed to get game list from server.");
                     continue;
                 }
 
@@ -88,11 +90,11 @@ public class ConsoleClient
                     if (res == null)
                     {
                         Console.WriteLine("Beitritt nicht möglich");
-                        Logger.LogInfo("Failed to join game");
+                        _logger.LogInfo("Failed to join game");
                     }
                     else
                     {
-                        _frontend = new GameFrontend(_wsClient, _playerId, res.Color, res.Gameboard);
+                        _frontend = new GameFrontend(_wsClient, _playerId, res.Color, res.Gameboard, _logger);
                         await _frontend.EnterGameAsync(res.GameId);
                     }
                 }
@@ -109,7 +111,7 @@ public class ConsoleClient
             else if (choice == "q" || choice == "Q")
             {
                 await CloseAsync();
-                Logger.LogInfo($"Client closed");
+                _logger.LogInfo($"Client closed");
                 break;
             }
             else
@@ -154,7 +156,7 @@ public class ConsoleClient
             _matchHistoryTcs = new TaskCompletionSource<MatchHistoryResponseMessage>();
             var req = new ListMatchHistoryMessage();
             await SendMessageAsync(req);
-            Logger.LogInfo("Sent ListMatchHistory request");
+            _logger.LogInfo("Sent ListMatchHistory request");
 
             var resp = await _matchHistoryTcs.Task;
             var matches = resp?.Matches ?? new System.Collections.Generic.List<MatchStats>();
@@ -206,7 +208,7 @@ public class ConsoleClient
         }
         catch (Exception ex)
         {
-            Logger.LogError("Error while requesting match history: " + ex.Message);
+            _logger.LogError("Error while requesting match history: " + ex.Message);
         }
     }
 
@@ -245,7 +247,7 @@ public class ConsoleClient
         }
         catch (Exception ex)
         {
-            Logger.LogError("Cannot send message: " + ex.Message);
+            _logger.LogError("Cannot send message: " + ex.Message);
         }
     }
 
@@ -257,12 +259,12 @@ public class ConsoleClient
             var createMsg = new CreateGameMessage();
 
             await SendMessageAsync(createMsg);
-            Logger.LogInfo($"Sent CreateGame message");
+            _logger.LogInfo($"Sent CreateGame message");
             return await _createGameTcs.Task;
         }
         catch (Exception ex)
         {
-            Logger.LogError("Exception when sending CreateGame message: " + ex.Message);
+            _logger.LogError("Exception when sending CreateGame message: " + ex.Message);
             return null;
         }
     }
@@ -279,12 +281,12 @@ public class ConsoleClient
             };
 
             await SendMessageAsync(createMsg);
-            Logger.LogInfo($"Sent JoinGame message with GameId {createMsg.GameId}");
+            _logger.LogInfo($"Sent JoinGame message with GameId {createMsg.GameId}");
             return await _joinGameTcs.Task;
         }
         catch (Exception ex)
         {
-            Logger.LogError("Exception when sending JoinGame message: " + ex.Message);
+            _logger.LogError("Exception when sending JoinGame message: " + ex.Message);
             return null;
         }
     }
@@ -297,24 +299,24 @@ public class ConsoleClient
             var listMsg = new ListGamesMessage();
 
             await SendMessageAsync(listMsg);
-            Logger.LogInfo($"Sent ListGames message");
+            _logger.LogInfo($"Sent ListGames message");
             return await _listGamesTcs.Task;
         }
         catch (Exception ex)
         {
-            Logger.LogError("Exception when sending JoinGame message: " + ex.Message);
+            _logger.LogError("Exception when sending JoinGame message: " + ex.Message);
             return null;
         }
     }
 
     private void OnWsMessageReceived(IMessage message)
     {
-        Logger.LogInfo($"Received message: {message}");
+        _logger.LogInfo($"Received message: {message}");
         switch (message)
         {
             case WelcomeMessage welcome:
                 _playerId = welcome.ClientId;
-                Logger.LogInfo($"Received WelcomeMessage. Assigned client id {_playerId}");
+                _logger.LogInfo($"Received WelcomeMessage. Assigned client id {_playerId}");
                 _welcomeTcs?.TrySetResult(_playerId);
                 break;
             case GameCreatedMessage createdMsg:
@@ -340,7 +342,7 @@ public class ConsoleClient
         }
         catch (Exception ex)
         {
-            Logger.LogError("Error closing WebSocket: " + ex.Message);
+            _logger.LogError("Error closing WebSocket: " + ex.Message);
         }
     }
 

@@ -8,6 +8,7 @@ using MadnShared.Stats;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using MadnServerTest.Mocks;
+using MadnShared.Logger;
 using MadnShared.Messages.Base;
 
 namespace MadnServerTest
@@ -16,13 +17,15 @@ namespace MadnServerTest
     public class StatsServiceTest
     {
         private Guid _gameId = Guid.NewGuid();
+        private static ILogger _logger = new MockLogger();
+        private IStatsService _statsService = new StatsService(_logger);
 
         [TestInitialize]
         public void Init()
         {
             var repoRoot = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
             var dir = Path.Combine(repoRoot, "MadnServer", "logs", "matches");
-            StatsService.Instance.SetOutputDirectory(dir);
+            _statsService.SetOutputDirectory(dir);
             if (Directory.Exists(dir))
             {
                 foreach (var f in Directory.GetFiles(dir)) File.Delete(f);
@@ -34,16 +37,16 @@ namespace MadnServerTest
         {
             var p = new MockPlayer { Color = Color.Green };
             var players = new List<IPlayer> { p };
-            StatsService.Instance.StartMatch(_gameId, players);
+            _statsService.StartMatch(_gameId, players);
 
             // single move without capture
-            StatsService.Instance.RecordMove(_gameId, p.Id, 1, 4, false, null, DateTime.UtcNow);
+            _statsService.RecordMove(_gameId, p.Id, 1, 4, false, null, DateTime.UtcNow);
             // move with capture
-            StatsService.Instance.RecordMove(_gameId, p.Id, 2, 6, true, 99, DateTime.UtcNow);
+            _statsService.RecordMove(_gameId, p.Id, 2, 6, true, 99, DateTime.UtcNow);
 
             // end match to write json
-            StatsService.Instance.RecordTurnStart(_gameId, p.Id, DateTime.UtcNow);
-            StatsService.Instance.EndMatch(_gameId, DateTime.UtcNow, p.Id, p.Color).Wait();
+            _statsService.RecordTurnStart(_gameId, p.Id, DateTime.UtcNow);
+            _statsService.EndMatch(_gameId, DateTime.UtcNow, p.Id, p.Color).Wait();
 
             var msFile = Path.Combine(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..")), "MadnServer", "logs", "matches", _gameId + ".json");
             Assert.IsTrue(File.Exists(msFile));
@@ -70,9 +73,9 @@ namespace MadnServerTest
             var players = new List<IPlayer> { p };
             var gameId = Guid.NewGuid();
 
-            StatsService.Instance.StartMatch(gameId, players);
-            StatsService.Instance.RecordMove(gameId, p.Id, 1, 3, false, null, DateTime.UtcNow);
-            StatsService.Instance.CancelMatch(gameId, DateTime.UtcNow).Wait();
+            _statsService.StartMatch(gameId, players);
+            _statsService.RecordMove(gameId, p.Id, 1, 3, false, null, DateTime.UtcNow);
+            _statsService.CancelMatch(gameId, DateTime.UtcNow).Wait();
 
             var msFile = Path.Combine(Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..")), "MadnServer", "logs", "matches", gameId + ".json");
             Assert.IsTrue(File.Exists(msFile));

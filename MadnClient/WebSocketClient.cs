@@ -11,11 +11,17 @@ namespace MadnClient;
 
 public class WebSocketClient : IWebSocketClient, IDisposable
 {
+    private readonly ILogger _logger;
     private ClientWebSocket? _socket;
     private CancellationTokenSource _cts = new();
     public event Action<IMessage> MessageReceived = delegate { };
 
     public bool IsConnected => _socket != null && _socket.State == WebSocketState.Open;
+    
+    public WebSocketClient(ILogger logger)
+    {
+        _logger = logger;
+    }
 
     public async Task ConnectAsync(string serverUri)
     {
@@ -24,15 +30,15 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         _socket = new ClientWebSocket();
         try
         {
-            Logger.LogInfo("Connecting to " + serverUri);
+            _logger.LogInfo("Connecting to " + serverUri);
             await _socket.ConnectAsync(new Uri(serverUri), CancellationToken.None);
-            Logger.LogInfo("Connected to server at " + serverUri);
+            _logger.LogInfo("Connected to server at " + serverUri);
             _cts = new CancellationTokenSource();
             _ = Task.Run(() => ReceiveLoopAsync(_socket, _cts.Token));
         }
         catch (Exception ex)
         {
-            Logger.LogError("WebSocket connect failed: " + ex.Message);
+            _logger.LogError("WebSocket connect failed: " + ex.Message);
             _socket?.Dispose();
             _socket = null;
         }
@@ -42,7 +48,7 @@ public class WebSocketClient : IWebSocketClient, IDisposable
     {
         if (_socket == null || _socket.State != WebSocketState.Open)
         {
-            Logger.LogError("Cannot send message, not connected to server.");
+            _logger.LogError("Cannot send message, not connected to server.");
             return;
         }
         var json = MessageSerializer.Serialize(message);
@@ -84,7 +90,7 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                     result = await socket.ReceiveAsync(new ArraySegment<byte>(buffer), ct);
                     if (result.MessageType == WebSocketMessageType.Close)
                     {
-                        Logger.LogInfo("Server closed");
+                        _logger.LogInfo("Server closed");
                         await socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Client closing",
                             CancellationToken.None);
                         break;
@@ -105,13 +111,13 @@ public class WebSocketClient : IWebSocketClient, IDisposable
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError("Error in MessageReceived handler: " + ex.Message);
+                    _logger.LogError("Error in MessageReceived handler: " + ex.Message);
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError("ReceiveLoop error: " + ex.Message);
+            _logger.LogError("ReceiveLoop error: " + ex.Message);
         }
     }
 
@@ -132,7 +138,7 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         }
         catch (Exception ex)
         {
-            Logger.LogError("Error closing WebSocket: " + ex.Message);
+            _logger.LogError("Error closing WebSocket: " + ex.Message);
         }
     }
 

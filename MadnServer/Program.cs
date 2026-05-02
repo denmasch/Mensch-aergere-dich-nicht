@@ -6,10 +6,13 @@ using System.Threading;
 using Microsoft.AspNetCore.Builder;
 using MadnServer.Gamelogic;
 using MadnServer.Player;
+using MadnServer.Services;
 using MadnShared.Logger;
 using MadnShared.Messages.Base;
 using MadnShared.Utils;
-using MadnShared.Messages.ServerToClient; 
+using MadnShared.Messages.ServerToClient;
+using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace MadnServer;
 
@@ -17,20 +20,34 @@ class Program
 {
     static void Main(string[] args)
     {
-        Logger.AddWriter(new ConsoleWriter());
-        Logger.AddWriter(new FileWriter("logs/ServerLog.txt"));
-        
         var builder = WebApplication.CreateBuilder(args);
+        
+        var logger = new Logger();
+        logger.AddWriter(new ConsoleWriter());
+        logger.AddWriter(new FileWriter("logs/ServerLog.txt"));
+        builder.Services.AddSingleton<ILogger>(logger);
+        
+        builder.Services.AddSingleton<IStatsService, StatsService>();
+        builder.Services.AddSingleton<IGameManager, GameManager>();
+        builder.Services.AddSingleton<IMessageDispatcher, MessageDispatcher>();
+
+        
         var app = builder.Build();
         
         app.UseWebSockets();
 
-        app.Map("/ws", async context =>
+        app.Map("/ws", async (
+            HttpContext context,
+            ILogger logger,
+            IStatsService statsService,
+            IMessageDispatcher messageDispatcher,
+            IGameManager gameManager
+            ) =>
         {
             if (context.WebSockets.IsWebSocketRequest)
             {
                 using var webSocket = await context.WebSockets.AcceptWebSocketAsync();
-                Logger.LogInfo("Client connected");
+                logger.LogInfo("Client connected");
                 
                 IPlayer player = new RealPlayer(webSocket);
 
@@ -38,11 +55,11 @@ class Program
                 {
                     var welcome = new WelcomeMessage { ClientId = player.Id };
                     await player.SendAsync(welcome);
-                    Logger.LogInfo($"Sent WelcomeMessage to client {player.Id}");
+                    logger.LogInfo($"Sent WelcomeMessage to client {player.Id}");
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Failed to send WelcomeMessage to client {player.Id}: {ex.Message}");
+                    logger.LogError($"Failed to send WelcomeMessage to client {player.Id}: {ex.Message}");
                 }
 
                 var buffer = new byte[1024 * 4];
@@ -62,7 +79,7 @@ class Program
                             {
                                 await webSocket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed connection",
                                     CancellationToken.None);
-                                Logger.LogInfo("Client disconnected");
+                                logger.LogInfo("Client disconnected");
                                 break;
                             }
 
@@ -74,21 +91,21 @@ class Program
                         var msgJson = await reader.ReadToEndAsync();
 
                         var msg = MessageSerializer.Deserialize(msgJson);
-                        Logger.LogInfo("Received Message: " + msgJson);
+                        logger.LogInfo("Received Message: " + msgJson);
                         if (msg is null)
                             continue;
 
-                        MessageDispatcher.DispatchAsync(player, msg);
+                        await messageDispatcher.DispatchAsync(player, msg);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError("WebSocket error: " + ex.Message);
+                    logger.LogError("WebSocket error: " + ex.Message);
                 }
                 finally
                 {
-                    GameManager.RemovePlayerFromGames(player);
-                    Logger.LogInfo($"Cleaned up player {player.Id} on disconnect.");
+                    gameManager.RemovePlayerFromGames(player);
+                    logger.LogInfo($"Cleaned up player {player.Id} on disconnect.");
                 }
             }
             else
@@ -97,8 +114,8 @@ class Program
             }
         });
 
-        Logger.LogInfo("Server started");
+        logger.LogInfo("Server started");
         app.Run("http://0.0.0.0:5000");
-        Logger.LogInfo("Server stopped");
+        logger.LogInfo("Server stopped");
     }
 }
