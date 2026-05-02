@@ -28,19 +28,32 @@ public class WebSocketClient : IWebSocketClient, IDisposable
         if (IsConnected) return;
 
         _socket = new ClientWebSocket();
+        var connectCts = new CancellationTokenSource(TimeSpan.FromSeconds(5));
         try
         {
             _logger.LogInfo("Connecting to " + serverUri);
-            await _socket.ConnectAsync(new Uri(serverUri), CancellationToken.None);
+            await _socket.ConnectAsync(new Uri(serverUri), connectCts.Token);
             _logger.LogInfo("Connected to server at " + serverUri);
             _cts = new CancellationTokenSource();
             _ = Task.Run(() => ReceiveLoopAsync(_socket, _cts.Token));
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogError("WebSocket connect timed out");
+            _socket?.Dispose();
+            _socket = null;
+            throw new InvalidOperationException("Verbindungstimeout beim Verbinden zum Server.");
         }
         catch (Exception ex)
         {
             _logger.LogError("WebSocket connect failed: " + ex.Message);
             _socket?.Dispose();
             _socket = null;
+            throw new InvalidOperationException("Verbindung zum Server fehlgeschlagen: " + ex.Message, ex);
+        }
+        finally
+        {
+            connectCts.Dispose();
         }
     }
 

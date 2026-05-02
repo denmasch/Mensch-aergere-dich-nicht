@@ -36,7 +36,19 @@ public class ConsoleClient
 
     public async Task RunAsync(string serverUri)
     {
-        await _wsClient.ConnectAsync(serverUri);
+        if (!_wsClient.IsConnected)
+        {
+            try
+            {
+                await _wsClient.ConnectAsync(serverUri);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError("Initial connection failed: " + ex.Message);
+                throw;
+            }
+        }
+
         ShowWelcome();
         Console.ReadKey(true);
 
