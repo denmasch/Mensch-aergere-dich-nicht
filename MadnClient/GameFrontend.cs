@@ -142,6 +142,12 @@ namespace MadnClient
                                 Console.WriteLine("CPU Gegner können nur vor Spielstart hinzugefügt werden.");
                                 break;
                             }
+
+                            if (_playerCount >= 4)
+                            {
+                                Console.WriteLine("Die Lobby ist bereits voll. CPU Gegner kann nicht hinzugefügt werden.");
+                                break;
+                            }
                             
                             Difficulty difficulty = ShowCpuDifficultyMenu();
                             
@@ -344,7 +350,10 @@ namespace MadnClient
             if (_gameState == GameState.WaitingForStart && _yourColor == _adminColor)
             {
                 Console.WriteLine("│ S) Spiel starten                                   │");
-                Console.WriteLine("│ C) CPU Gegner hinzufügen                           │");
+                if (_playerCount < 4)
+                {
+                    Console.WriteLine("│ C) CPU Gegner hinzufügen                           │");
+                }
             }
             if (_gameState == GameState.RollDice)
             {
