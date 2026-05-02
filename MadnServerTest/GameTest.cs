@@ -1,7 +1,9 @@
 ﻿using MadnServer.Gamelogic;
 using MadnServer.Player;
+using MadnServer.Services;
 using MadnServerTest.Mocks;
 using MadnShared.Enums;
+using MadnShared.Logger;
 using MadnShared.Messages.ClientToServer;
 using MadnShared.Messages.ServerToClient;
 using MadnShared.Messages.Errors;
@@ -12,6 +14,8 @@ namespace MadnServerTest;
 [TestClass]
 public sealed class GameTest
 {
+    private static readonly ILogger _logger = new MockLogger();
+    private static readonly IStatsService _statsService = new MockStatsService();
     private static Game CreateGameWithPlayers(out MockPlayer p1, out MockPlayer p2)
     {
         p1 = new MockPlayer()
@@ -23,7 +27,7 @@ public sealed class GameTest
             Color = Color.Green
         };
         var players = new List<IPlayer> { p1, p2 };
-        return new Game(players);
+        return new Game(players, _logger, _statsService);
     }
 
     [TestMethod]
@@ -148,7 +152,7 @@ public sealed class GameTest
     {
         var p1 = new MockPlayer();
         var p2 = new MockPlayer();
-        var game = new Game(new List<IPlayer> { p1, p2 });
+        var game = new Game(new List<IPlayer> { p1, p2 }, _logger, _statsService);
 
         // player 3 and 4 can join 
         var p3 = new MockPlayer();

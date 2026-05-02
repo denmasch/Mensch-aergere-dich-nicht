@@ -12,6 +12,7 @@ namespace MadnClient
 {
     public class GameFrontend
     {
+        private readonly ILogger _logger;
         private readonly IWebSocketClient _wsClient;
         private readonly Guid _playerId;
         private Guid _gameId;
@@ -58,13 +59,14 @@ namespace MadnClient
             _indexToCoord = _pathMap.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
         }
 
-        public GameFrontend(IWebSocketClient wsClient, Guid playerId, Color yourColor, GameboardDTO initialBoard)
+        public GameFrontend(IWebSocketClient wsClient, Guid playerId, Color yourColor, GameboardDTO initialBoard, ILogger logger)
         {
             _wsClient = wsClient;
             _playerId = playerId;
             _yourColor = yourColor;
             _currentGameboard = initialBoard;
             _wsClient.MessageReceived += OnWsMessageReceived;
+            _logger = logger;
         }
 
         public async Task EnterGameAsync(Guid gameId)
@@ -168,7 +170,7 @@ namespace MadnClient
             }
             catch (Exception ex)
             {
-                Logger.LogError("Cannot send message: " + ex.Message);
+                _logger.LogError("Cannot send message: " + ex.Message);
             }
         }
 
@@ -184,12 +186,12 @@ namespace MadnClient
                 };
 
                 await SendMessageAsync(leaveGameMessage);
-                Logger.LogInfo($"Sent Leave message");
+                _logger.LogInfo($"Sent Leave message");
                 return await _leaveTcs.Task;
             }
             catch (Exception ex)
             {
-                Logger.LogError("Exception when sending LeaveGame message: " + ex.Message);
+                _logger.LogError("Exception when sending LeaveGame message: " + ex.Message);
                 return null;
             }
         }
@@ -206,12 +208,12 @@ namespace MadnClient
                 };
 
                 await SendMessageAsync(rollDiceMessage);
-                Logger.LogInfo($"Sent RollDice message");
+                _logger.LogInfo($"Sent RollDice message");
                 return await _diceTcs.Task;
             }
             catch (Exception ex)
             {
-                Logger.LogError("Exception when sending RollDice message: " + ex.Message);
+                _logger.LogError("Exception when sending RollDice message: " + ex.Message);
                 return null;
             }
         }
@@ -227,12 +229,12 @@ namespace MadnClient
                 };
 
                 await SendMessageAsync(addCpuMessage);
-                Logger.LogInfo($"Sent AddCpuPlayer message");
+                _logger.LogInfo($"Sent AddCpuPlayer message");
                 _needsRedraw = true;
             }
             catch (Exception ex)
             {
-                Logger.LogError("Exception when sending AddCpuPlayer message: " + ex.Message);
+                _logger.LogError("Exception when sending AddCpuPlayer message: " + ex.Message);
             }
         }
         
@@ -247,11 +249,11 @@ namespace MadnClient
                 };
 
                 await SendMessageAsync(startGameMessage);
-                Logger.LogInfo($"Sent CreateGame message");
+                _logger.LogInfo($"Sent CreateGame message");
             }
             catch (Exception ex)
             {
-                Logger.LogError("Exception when sending CreateGame message: " + ex.Message);
+                _logger.LogError("Exception when sending CreateGame message: " + ex.Message);
             }
         }
 
@@ -538,11 +540,11 @@ namespace MadnClient
         }
         private void OnWsMessageReceived(IMessage message)
         {
-            Logger.LogInfo($"Received message: {message}");
+            _logger.LogInfo($"Received message: {message}");
             switch (message)
             {
                 case DiceResultMessage diceMsg:
-                    Logger.LogInfo($"Dice rolled: {diceMsg.Value}");
+                    _logger.LogInfo($"Dice rolled: {diceMsg.Value}");
                     _currentTurnDice = diceMsg.Value;
                     if (diceMsg.ValidMoves != null && diceMsg.ValidMoves.Count > 0)
                         _gameState = GameState.MoveFigure;
@@ -554,14 +556,14 @@ namespace MadnClient
                 case GameLeftMessage leftMsg:
                     if (leftMsg.PlayerId != _playerId)
                     {
-                        Logger.LogInfo($"Player {leftMsg.PlayerId} left the game.");
+                        _logger.LogInfo($"Player {leftMsg.PlayerId} left the game.");
                         break;
                     }
-                    Logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
+                    _logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
                     _leaveTcs?.TrySetResult(leftMsg);
                     break;
                 case NextPlayerMessage nextMsg:
-                    Logger.LogInfo($"Next player: {nextMsg.NextPlayerId}");
+                    _logger.LogInfo($"Next player: {nextMsg.NextPlayerId}");
                     _isGameStarted = true;
                     _currentTurnColor = nextMsg.NextPlayerColor;
                     if (nextMsg.NextPlayerId != _playerId)
@@ -571,11 +573,11 @@ namespace MadnClient
                     else
                     {
                         _gameState = GameState.RollDice;
-                        Logger.LogInfo("Your turn");
+                        _logger.LogInfo("Your turn");
                     }
                     break;
                 case GameOverMessage gameOverMsg:
-                    Logger.LogInfo($"Game over. Winner: {gameOverMsg.WinnerPlayerId}");
+                    _logger.LogInfo($"Game over. Winner: {gameOverMsg.WinnerPlayerId}");
                     _isGameStarted = false;
                     _gameState = GameState.GameOver;
                     _winnerColor = gameOverMsg.WinnerColor;

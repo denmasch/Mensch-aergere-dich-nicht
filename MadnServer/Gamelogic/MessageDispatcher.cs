@@ -11,25 +11,36 @@ using MadnServer.Services;
 
 namespace MadnServer.Gamelogic;
 
-public static class MessageDispatcher
+public class MessageDispatcher : IMessageDispatcher
 {
-    public static async Task DispatchAsync(IPlayer fromPlayer, IMessage message)
+    private readonly ILogger _logger;
+    private readonly IGameManager _gameManager;
+    private readonly IStatsService _statsService;
+
+    public MessageDispatcher(ILogger logger, IGameManager  gameManager, IStatsService statsService)
+    {
+        _logger = logger;
+        _gameManager = gameManager;
+        _statsService = statsService;
+    }
+    
+    public async Task DispatchAsync(IPlayer fromPlayer, IMessage message)
     {
         if (message == null)
             return;
 
-        Logger.LogInfo($"Dispatching message of type {message.GetType().Name}");
+        _logger.LogInfo($"Dispatching message of type {message.GetType().Name}");
 
         if (message is IGameMessage gameMessage)
         {
-            var game = GameManager.GetGame(gameMessage.GameId);
+            var game = _gameManager.GetGame(gameMessage.GameId);
             if (game != null)
             {
                 game.HandleMessage(fromPlayer, gameMessage);
             }
             else
             {
-                Logger.LogInfo($"No game found with id {gameMessage.GameId}. Sending error to sender.");
+                _logger.LogInfo($"No game found with id {gameMessage.GameId}. Sending error to sender.");
                 await fromPlayer.SendAsync(new UnknownMessageTypeMessage());
             }
             return;
@@ -41,43 +52,43 @@ public static class MessageDispatcher
             return;
         }
 
-        Logger.LogError($"Received unknown message type: {message.GetType().Name}");
+        _logger.LogError($"Received unknown message type: {message.GetType().Name}");
         await fromPlayer.SendAsync(new UnknownMessageTypeMessage());
     }
 
-    private static async Task HandleLobbyMessageAsync(IPlayer fromPlayer, ILobbyMessage lobbyMessage)
+    private async Task HandleLobbyMessageAsync(IPlayer fromPlayer, ILobbyMessage lobbyMessage)
     {
         var typeName = lobbyMessage.GetType().Name;
 
-        Logger.LogInfo($"Handling lobby message of type {typeName} from player {fromPlayer.Id}");
+        _logger.LogInfo($"Handling lobby message of type {typeName} from player {fromPlayer.Id}");
         
         Game game;
         Color color;
         switch (lobbyMessage)
         {
             case CreateGameMessage createGameMessage:
-                game = GameManager.CreateGame(fromPlayer);
+                game = _gameManager.CreateGame(fromPlayer);
                 color = game.Players.Find(p => p.Id == fromPlayer.Id).Color;
                 await fromPlayer.SendAsync(new GameCreatedMessage { GameId = game.Id , Gameboard = game.Gameboard.ToDto(), Color = color });
                 await fromPlayer.SendAsync(new GameInfoMessage() {GameId = game.Id, AdminColor = game.Players[0].Color, PlayerCount = game.Players.Count});
                 break;
             case JoinGameMessage joinGameMessage:
-                game = GameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
+                game = _gameManager.TryJoinGame(joinGameMessage.GameId, fromPlayer);
                 color = game.Players.Find(p => p.Id == fromPlayer.Id).Color;
                 await fromPlayer.SendAsync(new GameJoinedMessage() { GameId = joinGameMessage.GameId , Gameboard = game.Gameboard.ToDto(), Color = color });
                 await fromPlayer.SendAsync(new GameInfoMessage() {GameId = game.Id, AdminColor = game.Players[0].Color, PlayerCount = game.Players.Count});
                 break;
             case ListGamesMessage listGamesMessage:
-                var games = GameManager.GetAllJoinableGames();
+                var games = _gameManager.GetAllJoinableGames();
                 await fromPlayer.SendAsync(new ListGamesResponseMessage { Games = games });
                 break;
             case ListMatchHistoryMessage listMatchHistoryMessage:
                 // Fetch stored matches from StatsService and send back to client
-                var matches = StatsService.Instance.GetStoredMatches();
-                fromPlayer.SendAsync(new MatchHistoryResponseMessage { Matches = matches });
+                var matches = _statsService.GetStoredMatches();
+                await fromPlayer.SendAsync(new MatchHistoryResponseMessage { Matches = matches });
                 break;
             default:
-                Logger.LogError($"Unhandled lobby message type: {typeName}");
+                _logger.LogError($"Unhandled lobby message type: {typeName}");
                 break;
                 
         }

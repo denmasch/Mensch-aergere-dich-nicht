@@ -14,6 +14,13 @@ public abstract class CpuPlayer : ICpuPlayer
 {
     public Color Color { get; set; }
     public Guid Id { get; } = Guid.NewGuid();
+    
+    private readonly Game _game;
+
+    protected CpuPlayer(Game game)
+    {
+        _game = game;
+    }
 
     public async Task SendAsync(IMessage message)
     {
@@ -41,7 +48,7 @@ public abstract class CpuPlayer : ICpuPlayer
             PlayerId = Id
         };
 
-        await MessageDispatcher.DispatchAsync(this, rollDice);
+        _game.HandleMessage(this, rollDice);
     }
 
     private async Task HandleDiceResultMessage(DiceResultMessage message)
@@ -59,7 +66,7 @@ public abstract class CpuPlayer : ICpuPlayer
             DiceRoll = message.Value
         };
 
-        await MessageDispatcher.DispatchAsync(this, move);
+        _game.HandleMessage(this, move);
     }
 
     protected abstract Move SelectMove(IReadOnlyList<Move> validMoves);

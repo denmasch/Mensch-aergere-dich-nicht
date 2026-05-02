@@ -9,20 +9,21 @@ using MadnShared.Stats;
 using MadnServer.Gamelogic;
 using MadnServer.Player;
 using MadnShared.Enums;
+using MadnShared.Logger;
 
 namespace MadnServer.Services
 {
-    public class StatsService
+    public class StatsService : IStatsService
     {
-        private static readonly Lazy<StatsService> _instance = new Lazy<StatsService>(() => new StatsService());
-        public static StatsService Instance => _instance.Value;
+        private readonly ILogger _logger;
 
         private readonly ConcurrentDictionary<Guid, MatchStats> _activeMatches = new ConcurrentDictionary<Guid, MatchStats>();
         private readonly ConcurrentDictionary<Guid, SemaphoreSlim> _locks = new ConcurrentDictionary<Guid, SemaphoreSlim>();
         private string _outDir = Path.Combine("logs", "matches");
 
-        private StatsService()
+        public StatsService(ILogger logger)
         {
+            _logger = logger;
             Directory.CreateDirectory(_outDir);
         }
 
@@ -122,12 +123,12 @@ namespace MadnServer.Services
                 var json = JsonSerializer.Serialize(ms, opts);
                 await File.WriteAllTextAsync(fname, json);
                 // log full path for easier debugging
-                MadnShared.Logger.Logger.LogInfo($"Stats written to: {Path.GetFullPath(fname)}");
+                _logger.LogInfo($"Stats written to: {Path.GetFullPath(fname)}");
             }
             catch (Exception ex)
             {
                 // log and swallow
-                MadnShared.Logger.Logger.LogError($"Failed to persist match stats for {gameId}: {ex.Message}");
+                _logger.LogError($"Failed to persist match stats for {gameId}: {ex.Message}");
             }
             finally
             {
@@ -159,13 +160,13 @@ namespace MadnServer.Services
                     }
                     catch (Exception ex)
                     {
-                        MadnShared.Logger.Logger.LogError($"Failed to read match file {f}: {ex.Message}");
+                        _logger.LogError($"Failed to read match file {f}: {ex.Message}");
                     }
                 }
             }
             catch (Exception ex)
             {
-                MadnShared.Logger.Logger.LogError($"Failed to enumerate match files in {_outDir}: {ex.Message}");
+                _logger.LogError($"Failed to enumerate match files in {_outDir}: {ex.Message}");
             }
 
             return result;

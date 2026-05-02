@@ -15,6 +15,11 @@ namespace MadnServer.Gamelogic;
 
 public class Game
 {
+    private readonly ILogger _logger;
+    private readonly IStatsService _statsService;
+    
+    public event Action<Guid>? GameFinished;
+    
     public Guid Id { get; } = Guid.NewGuid();
     public Gameboard Gameboard { get; set; }
     public List<IPlayer> Players { get; private set; }
@@ -27,7 +32,7 @@ public class Game
     private const int MaxPlayers = 4;
     private readonly object _colorLock = new object();
 
-    public Game(List<IPlayer> players)
+    public Game(List<IPlayer> players, ILogger logger, IStatsService statsService)
     {
         Players = players;
         lock (_colorLock)
@@ -38,6 +43,8 @@ public class Game
             }
         }
         Gameboard = new Gameboard();
+        _logger = logger;
+        _statsService = statsService;
     }
     
     public bool AddPlayer(IPlayer player)
@@ -47,13 +54,13 @@ public class Game
             // if game already started or max players reached, reject join
             if (_gameStarted || Players.Count >= MaxPlayers)
             {
-                Logger.LogInfo($"Game {Id} is already started or is full. Player cannot join.");
+                _logger.LogInfo($"Game {Id} is already started or is full. Player cannot join.");
                 return false;
             }
 
             player.Color = GetFirstUnusedColor();
             Players.Add(player);
-            Logger.LogInfo($"{player.Color} player joined game {Id}.");
+            _logger.LogInfo($"{player.Color} player joined game {Id}.");
         }
         
         Broadcast(new GameInfoMessage()
@@ -91,12 +98,12 @@ public class Game
             NextPlayerId = Players[_currentPlayerIndex].Id,
             NextPlayerColor = Players[_currentPlayerIndex].Color
         });
-        Logger.LogInfo($"Game {Id} started with {Players.Count} players.");
+        _logger.LogInfo($"Game {Id} started with {Players.Count} players.");
 
         // start stats collection for this match
-        StatsService.Instance.StartMatch(Id, Players);
+        _statsService.StartMatch(Id, Players);
         // record first turn start
-        StatsService.Instance.RecordTurnStart(Id, Players[_currentPlayerIndex].Id, DateTime.UtcNow);
+        _statsService.RecordTurnStart(Id, Players[_currentPlayerIndex].Id, DateTime.UtcNow);
     }
     
     private bool CheckGameOver()
@@ -112,23 +119,23 @@ public class Game
                 WinnerColor = winner.Color
             });
 
-            Logger.LogInfo($"Game {Id} is over. Player {winner.Id} ({winner.Color}) wins!");
+            _logger.LogInfo($"Game {Id} is over. Player {winner.Id} ({winner.Color}) wins!");
             _gameStarted = false;
 
             // end stats collection and persist
             try
             {
-                Logger.LogInfo($"Persisting stats for finished game {Id}...");
+                _logger.LogInfo($"Persisting stats for finished game {Id}...");
                 // wait for the async persistence to finish to ensure the JSON is written
-                StatsService.Instance.EndMatch(Id, DateTime.UtcNow, winner.Id, winner.Color).GetAwaiter().GetResult();
-                Logger.LogInfo($"Stats persisted for game {Id}.");
+                _statsService.EndMatch(Id, DateTime.UtcNow, winner.Id, winner.Color).GetAwaiter().GetResult();
+                _logger.LogInfo($"Stats persisted for game {Id}.");
             }
             catch (Exception ex)
             {
-                Logger.LogError($"Error while persisting stats for game {Id}: {ex.Message}");
+                _logger.LogError($"Error while persisting stats for game {Id}: {ex.Message}");
             }
 
-            GameManager.RemoveGame(Id);
+            GameFinished?.Invoke(Id);
         }
 
         return isGameOver;
@@ -144,7 +151,7 @@ public class Game
         switch (message)
         {
             case StartGameMessage:
-                Logger.LogInfo($"Player {fromPlayer.Id} requested to start game {Id}.");
+                _logger.LogInfo($"Player {fromPlayer.Id} requested to start game {Id}.");
                 // Player 1 is admin of the group and can start the game, but only if there is at least 1 player in the game
                 if (!_gameStarted && Players.Count > 0 && Players[0] == fromPlayer)
                 {
@@ -152,27 +159,27 @@ public class Game
                 }
                 else
                 {
-                    Logger.LogInfo($"Player {fromPlayer.Id} is not allowed to start game {Id}.");
+                    _logger.LogInfo($"Player {fromPlayer.Id} is not allowed to start game {Id}.");
                 }
                 break;
             case RollDiceMessage rollDice:
-                Logger.LogInfo($"Player {fromPlayer.Id} requested to roll dice in game {Id}.");
+                _logger.LogInfo($"Player {fromPlayer.Id} requested to roll dice in game {Id}.");
                 HandleRollDice(fromPlayer, rollDice);
                 break;
             case MoveFigureMessage moveFigure:
-                Logger.LogInfo($"Player {fromPlayer.Id} requested to move figure in game {Id}.");
+                _logger.LogInfo($"Player {fromPlayer.Id} requested to move figure in game {Id}.");
                 HandleMoveFigure(fromPlayer, moveFigure);
                 break;
             case LeaveGameMessage leaveGame:
-                Logger.LogInfo($"Player {fromPlayer.Id} requested to leave game {Id}.");
+                _logger.LogInfo($"Player {fromPlayer.Id} requested to leave game {Id}.");
                 HandleLeaveGame(fromPlayer, leaveGame);
                 break;
             case AddCpuPlayerMessage addCpuPlayer:
-                Logger.LogInfo($"Player {fromPlayer.Id} requested to add cpu player {Id}.");
+                _logger.LogInfo($"Player {fromPlayer.Id} requested to add cpu player {Id}.");
                 HandleAddCpuPlayer(fromPlayer, addCpuPlayer);
                 break;
             default:
-                Logger.LogError($"Unhandled message type {message.GetType().Name}");
+                _logger.LogError($"Unhandled message type {message.GetType().Name}");
                 Broadcast(new UnknownMessageTypeMessage
                 {
                     GameId = Id
@@ -228,13 +235,13 @@ public class Game
         });
 
         // record turn start
-        StatsService.Instance.RecordTurnStart(Id, next.Id, DateTime.UtcNow);
+        _statsService.RecordTurnStart(Id, next.Id, DateTime.UtcNow);
     }
     private void HandleAddCpuPlayer(IPlayer fromPlayer, AddCpuPlayerMessage msg)
     {
         if (_gameStarted || Players.Count >= MaxPlayers || fromPlayer != Players[0])
         {
-            Logger.LogInfo($"Player {fromPlayer.Id} is not allowed to add CPU player.");
+            _logger.LogInfo($"Player {fromPlayer.Id} is not allowed to add CPU player.");
             return;
         }
 
@@ -243,16 +250,16 @@ public class Game
         switch (msg.Difficulty)
         {
             case Difficulty.Easy:
-                cpuPlayer = new CpuPlayerEasy();
+                cpuPlayer = new CpuPlayerEasy(this);
                 break;
             case Difficulty.Medium:
-                cpuPlayer = new CpuPlayerMedium();
+                cpuPlayer = new CpuPlayerMedium(this);
                 break;
             case Difficulty.Hard:
-                cpuPlayer = new CpuPlayerHard();
+                cpuPlayer = new CpuPlayerHard(this);
                 break;
             default:
-                Logger.LogError($"Invalid difficulty level {msg.Difficulty} for CPU player.");
+                _logger.LogError($"Invalid difficulty level {msg.Difficulty} for CPU player.");
                 return;
         }
 
@@ -260,11 +267,11 @@ public class Game
         
         if (AddPlayer(cpuPlayer))
         {
-            Logger.LogInfo($"CPU player added to game {Id} by player {fromPlayer.Id}.");
+            _logger.LogInfo($"CPU player added to game {Id} by player {fromPlayer.Id}.");
         }
         else
         {
-            Logger.LogInfo($"Failed to add CPU player to game {Id}. Game may be full or already started.");
+            _logger.LogInfo($"Failed to add CPU player to game {Id}. Game may be full or already started.");
         }
     }
 
@@ -272,17 +279,17 @@ public class Game
     {
         if (!IsCurrentPlayer(fromPlayer))
         {
-            Logger.LogInfo($"Player {fromPlayer.Id} attempted to roll dice out of turn in game {Id}.");
+            _logger.LogInfo($"Player {fromPlayer.Id} attempted to roll dice out of turn in game {Id}.");
             return;
         } 
 
         var diceValue = Dice.RollDice();
         
-        Logger.LogInfo($"Player {fromPlayer.Id} rolled a {diceValue} in game {Id}.");
+        _logger.LogInfo($"Player {fromPlayer.Id} rolled a {diceValue} in game {Id}.");
             
         var validMoves = Gameboard.GetValidMoves(fromPlayer.Color, diceValue);
         
-        Logger.LogInfo($"Player {fromPlayer.Id} has {validMoves.Count} valid moves.");
+        _logger.LogInfo($"Player {fromPlayer.Id} has {validMoves.Count} valid moves.");
         
         fromPlayer.SendAsync(new DiceResultMessage
         {
@@ -294,7 +301,7 @@ public class Game
         
         if (validMoves.Count == 0)
         {
-            Logger.LogInfo($"Player {fromPlayer.Id} has no valid moves and will skip their turn in game {Id}.");
+            _logger.LogInfo($"Player {fromPlayer.Id} has no valid moves and will skip their turn in game {Id}.");
             NextPlayer();
         }
     }
@@ -311,7 +318,7 @@ public class Game
         var moveResult = Gameboard.MoveFigureResult(fig, col, msg.DiceRoll);
 
         // record move and capture if any
-        StatsService.Instance.RecordMove(Id, fromPlayer.Id, figId, msg.DiceRoll, moveResult.Captured, moveResult.CapturedFigureId, DateTime.UtcNow);
+        _statsService.RecordMove(Id, fromPlayer.Id, figId, msg.DiceRoll, moveResult.Captured, moveResult.CapturedFigureId, DateTime.UtcNow);
 
         Broadcast(new GameboardUpdatedMessage
         {
@@ -356,11 +363,11 @@ public class Game
         if (leaveIndex < 0)
         {
             Players.Remove(fromPlayer);
-            Logger.LogInfo($"Player {fromPlayer.Id} left but was not found in game {Id}.");
+            _logger.LogInfo($"Player {fromPlayer.Id} left but was not found in game {Id}.");
             if (Players.Count == 0)
             {
                 _gameStarted = false;
-                GameManager.RemoveGame(Id);
+                GameFinished?.Invoke(Id);
             }
 
             return;
@@ -376,17 +383,17 @@ public class Game
             {
                 try
                 {
-                    Logger.LogInfo($"Persisting canceled game stats for {Id}...");
-                    StatsService.Instance.CancelMatch(Id, DateTime.UtcNow).GetAwaiter().GetResult();
-                    Logger.LogInfo($"Canceled game stats persisted for {Id}.");
+                    _logger.LogInfo($"Persisting canceled game stats for {Id}...");
+                    _statsService.CancelMatch(Id, DateTime.UtcNow).GetAwaiter().GetResult();
+                    _logger.LogInfo($"Canceled game stats persisted for {Id}.");
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError($"Error while persisting canceled game stats for {Id}: {ex.Message}");
+                    _logger.LogError($"Error while persisting canceled game stats for {Id}: {ex.Message}");
                 }
             }
-            GameManager.RemoveGame(Id);
-            Logger.LogInfo($"Player {fromPlayer.Id} left. No players remaining. Game {Id} closed.");
+            GameFinished?.Invoke(Id);
+            _logger.LogInfo($"Player {fromPlayer.Id} left. No players remaining. Game {Id} closed.");
             return;
         }
 
@@ -432,7 +439,7 @@ public class Game
             }
 
             // if leaveIndex > _currentPlayerIndex, no need to update current player index since the leaving player was after the current player in the list
-            Logger.LogInfo($"Player {fromPlayer.Id} left. {Players.Count} players remaining. Current index {_currentPlayerIndex}.");
+            _logger.LogInfo($"Player {fromPlayer.Id} left. {Players.Count} players remaining. Current index {_currentPlayerIndex}.");
         }
 
         Broadcast(new GameInfoMessage()
