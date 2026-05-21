@@ -7,13 +7,16 @@ using MadnShared.Messages.Base;
 using MadnShared.Messages.ClientToServer;
 using MadnShared.Enums;
 using MadnShared.GameAssets;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace MadnClient
 {
     public class GameFrontend
     {
         private readonly ILogger _logger;
-        private readonly IWebSocketClient _wsClient;
+        private readonly GameManager _gameManager;
+        private readonly MessageDispatcher _dispatcher;
         private readonly Guid _playerId;
         private Guid _gameId;
         private Color _currentTurnColor;
@@ -24,8 +27,6 @@ namespace MadnClient
         private int _currentTurnDice;
         private bool _isGameStarted = false;
         private GameboardDTO _currentGameboard;
-        private TaskCompletionSource<DiceResultMessage> _diceTcs;
-        private TaskCompletionSource<GameLeftMessage> _leaveTcs;
         private GameState _gameState;
         private bool _needsRedraw = true;
 
@@ -59,14 +60,21 @@ namespace MadnClient
             _indexToCoord = _pathMap.ToDictionary(kvp => kvp.Value, kvp => kvp.Key);
         }
 
-        public GameFrontend(IWebSocketClient wsClient, Guid playerId, Color yourColor, GameboardDTO initialBoard, ILogger logger)
+        public GameFrontend(GameManager gameManager, MessageDispatcher dispatcher, Guid playerId, Color yourColor, GameboardDTO initialBoard, ILogger logger)
         {
-            _wsClient = wsClient;
+            _gameManager = gameManager;
+            _dispatcher = dispatcher;
             _playerId = playerId;
             _yourColor = yourColor;
             _currentGameboard = initialBoard;
-            _wsClient.MessageReceived += OnWsMessageReceived;
             _logger = logger;
+
+            _dispatcher.DiceResultReceived += HandleDiceResult;
+            _dispatcher.GameboardUpdatedReceived += HandleGameboardUpdated;
+            _dispatcher.GameLeftReceived += HandleGameLeft;
+            _dispatcher.NextPlayerReceived += HandleNextPlayer;
+            _dispatcher.GameOverReceived += HandleGameOver;
+            _dispatcher.GameInfoReceived += HandleGameInfo;
         }
 
         public async Task EnterGameAsync(Guid gameId)
@@ -93,7 +101,7 @@ namespace MadnClient
                                 stay = false;
                                 break;
                             }
-                            var res = await SendLeaveAsync();
+                            var res = await _gameManager.SendLeaveAsync(_gameId, _playerId);
                             if (res != null && res.PlayerId == _playerId)
                             {
                                 stay = false;
@@ -106,7 +114,7 @@ namespace MadnClient
                                 Console.WriteLine("Spiel wurde bereits gestartet.");
                                 break;
                             }
-                            await SendStartGameAsync();
+                            await _gameManager.SendStartGameAsync(_gameId, _playerId);
                             break;
                         case ConsoleKey.W:
                             if (_gameState != GameState.RollDice)
@@ -115,7 +123,7 @@ namespace MadnClient
                                 break;
                             }
 
-                            var response = await SendRollDiceAsync();
+                            var response = await _gameManager.SendRollDiceAsync(_gameId, _playerId);
                             if (response != null && response.ValidMoves != null && response.ValidMoves.Count > 0)
                             {
                                 await PromptSelectMoveAsync(response);
@@ -152,7 +160,7 @@ namespace MadnClient
                             Difficulty difficulty = ShowCpuDifficultyMenu();
                             
 
-                            await SendAddCpuAsync(difficulty);
+                            await _gameManager.SendAddCpuAsync(_gameId, difficulty);
                             break;
                         default:
                             Console.WriteLine("Unbekannte Option. 'B' zum Zurückkehren.");
@@ -168,101 +176,6 @@ namespace MadnClient
             await Task.Delay(300);
         }
         
-        private async Task SendMessageAsync(IMessage message)
-        {
-            try
-            {
-                await _wsClient.SendAsync(message);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Cannot send message: " + ex.Message);
-            }
-        }
-
-        private async Task<GameLeftMessage> SendLeaveAsync()
-        {
-            try
-            {
-                _leaveTcs = new TaskCompletionSource<GameLeftMessage>();
-                var leaveGameMessage = new LeaveGameMessage()
-                {
-                    GameId = _gameId,
-                    PlayerId = _playerId
-                };
-
-                await SendMessageAsync(leaveGameMessage);
-                _logger.LogInfo($"Sent Leave message");
-                return await _leaveTcs.Task;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Exception when sending LeaveGame message: " + ex.Message);
-                return null;
-            }
-        }
-        
-        private async Task<DiceResultMessage> SendRollDiceAsync()
-        {
-            try
-            {
-                _diceTcs = new TaskCompletionSource<DiceResultMessage>();
-                var rollDiceMessage = new RollDiceMessage()
-                {
-                    GameId = _gameId,
-                    PlayerId = _playerId
-                };
-
-                await SendMessageAsync(rollDiceMessage);
-                _logger.LogInfo($"Sent RollDice message");
-                return await _diceTcs.Task;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Exception when sending RollDice message: " + ex.Message);
-                return null;
-            }
-        }
-        
-        private async Task SendAddCpuAsync(Difficulty difficulty)
-        {
-            try
-            {
-                var addCpuMessage = new AddCpuPlayerMessage()
-                {
-                    GameId = _gameId,
-                    Difficulty = difficulty
-                };
-
-                await SendMessageAsync(addCpuMessage);
-                _logger.LogInfo($"Sent AddCpuPlayer message");
-                _needsRedraw = true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Exception when sending AddCpuPlayer message: " + ex.Message);
-            }
-        }
-        
-        private async Task SendStartGameAsync()
-        {
-            try
-            {
-                var startGameMessage = new StartGameMessage()
-                {
-                    GameId = _gameId,
-                    PlayerId = _playerId
-                };
-
-                await SendMessageAsync(startGameMessage);
-                _logger.LogInfo($"Sent CreateGame message");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError("Exception when sending CreateGame message: " + ex.Message);
-            }
-        }
-
         private void ShowMenu()
         {
             Console.Clear();
@@ -559,55 +472,62 @@ namespace MadnClient
                 _ => AnsiColor.Gray
             };
         }
-        private void OnWsMessageReceived(IMessage message)
+        private void HandleDiceResult(DiceResultMessage diceMsg)
         {
-            _logger.LogInfo($"Received message: {message}");
-            switch (message)
+            _logger.LogInfo($"Dice rolled: {diceMsg.Value}");
+            _currentTurnDice = diceMsg.Value;
+            if (diceMsg.ValidMoves != null && diceMsg.ValidMoves.Count > 0)
+                _gameState = GameState.MoveFigure;
+            _needsRedraw = true;
+        }
+
+        private void HandleGameboardUpdated(GameboardUpdatedMessage boardMsg)
+        {
+            _currentGameboard = boardMsg.Gameboard;
+            _needsRedraw = true;
+        }
+
+        private void HandleGameLeft(GameLeftMessage leftMsg)
+        {
+            if (leftMsg.PlayerId != _playerId)
             {
-                case DiceResultMessage diceMsg:
-                    _logger.LogInfo($"Dice rolled: {diceMsg.Value}");
-                    _currentTurnDice = diceMsg.Value;
-                    if (diceMsg.ValidMoves != null && diceMsg.ValidMoves.Count > 0)
-                        _gameState = GameState.MoveFigure;
-                    _diceTcs?.TrySetResult(diceMsg);
-                    break;
-                case GameboardUpdatedMessage boardMsg:
-                    _currentGameboard = boardMsg.Gameboard;
-                    break;
-                case GameLeftMessage leftMsg:
-                    if (leftMsg.PlayerId != _playerId)
-                    {
-                        _logger.LogInfo($"Player {leftMsg.PlayerId} left the game.");
-                        break;
-                    }
-                    _logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
-                    _leaveTcs?.TrySetResult(leftMsg);
-                    break;
-                case NextPlayerMessage nextMsg:
-                    _logger.LogInfo($"Next player: {nextMsg.NextPlayerId}");
-                    _isGameStarted = true;
-                    _currentTurnColor = nextMsg.NextPlayerColor;
-                    if (nextMsg.NextPlayerId != _playerId)
-                    {
-                        _gameState = GameState.OpponentTurn;
-                    }
-                    else
-                    {
-                        _gameState = GameState.RollDice;
-                        _logger.LogInfo("Your turn");
-                    }
-                    break;
-                case GameOverMessage gameOverMsg:
-                    _logger.LogInfo($"Game over. Winner: {gameOverMsg.WinnerPlayerId}");
-                    _isGameStarted = false;
-                    _gameState = GameState.GameOver;
-                    _winnerColor = gameOverMsg.WinnerColor;
-                    break;
-                case GameInfoMessage infoMsg:
-                    _playerCount = infoMsg.PlayerCount;
-                    _adminColor = infoMsg.AdminColor;
-                    break;
+                _logger.LogInfo($"Player {leftMsg.PlayerId} left the game.");
+                return;
             }
+            _logger.LogInfo($"Left game with ID: {leftMsg.GameId}");
+            _needsRedraw = true;
+        }
+
+        private void HandleNextPlayer(NextPlayerMessage nextMsg)
+        {
+            _logger.LogInfo($"Next player: {nextMsg.NextPlayerId}");
+            _isGameStarted = true;
+            _currentTurnColor = nextMsg.NextPlayerColor;
+            if (nextMsg.NextPlayerId != _playerId)
+            {
+                _gameState = GameState.OpponentTurn;
+            }
+            else
+            {
+                _gameState = GameState.RollDice;
+                _logger.LogInfo("Your turn");
+            }
+            _needsRedraw = true;
+        }
+
+        private void HandleGameOver(GameOverMessage gameOverMsg)
+        {
+            _logger.LogInfo($"Game over. Winner: {gameOverMsg.WinnerPlayerId}");
+            _isGameStarted = false;
+            _gameState = GameState.GameOver;
+            _winnerColor = gameOverMsg.WinnerColor;
+            _needsRedraw = true;
+        }
+
+        private void HandleGameInfo(GameInfoMessage infoMsg)
+        {
+            _playerCount = infoMsg.PlayerCount;
+            _adminColor = infoMsg.AdminColor;
             _needsRedraw = true;
         }
 
@@ -644,14 +564,7 @@ namespace MadnClient
                         break;
                     case ConsoleKey.Enter:
                         var chosen = _currentValidMoves[_selectedMoveIndex];
-                        var moveFigure = new MoveFigureMessage()
-                        {
-                            GameId = _gameId,
-                            PlayerId = _playerId,
-                            FigureId = chosen.FigureIndex,
-                            DiceRoll = chosen.Steps
-                        };
-                        await SendMessageAsync(moveFigure);
+                        await _gameManager.SendMoveFigureAsync(_gameId, _playerId, chosen.FigureIndex, chosen.Steps);
                         selecting = false;
                         _currentValidMoves = null;
                         _highlightStart = null;

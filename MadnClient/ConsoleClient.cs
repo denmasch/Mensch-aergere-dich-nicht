@@ -12,6 +12,7 @@ using System.IO;
 using System.Text.Json;
 using MadnShared.Stats;
 using System.Linq;
+
 namespace MadnClient;
 
 public class ConsoleClient
@@ -22,16 +23,30 @@ public class ConsoleClient
     private TaskCompletionSource<GameCreatedMessage> _createGameTcs;
     private TaskCompletionSource<GameJoinedMessage> _joinGameTcs;
     private readonly IWebSocketClient _wsClient;
+    private readonly MessageDispatcher _dispatcher;
+    private readonly GameManager _gameManager;
     private GameFrontend _frontend;
     private TaskCompletionSource<Guid> _welcomeTcs;
     private TaskCompletionSource<MatchHistoryResponseMessage> _matchHistoryTcs;
 
-    public ConsoleClient(IWebSocketClient wsClient, ILogger logger)
+    public ConsoleClient(IWebSocketClient wsClient, MessageDispatcher dispatcher, GameManager gameManager, ILogger logger)
     {
         _wsClient = wsClient;
-        _wsClient.MessageReceived += OnWsMessageReceived;
+        _dispatcher = dispatcher;
+        _gameManager = gameManager;
         _welcomeTcs = new TaskCompletionSource<Guid>();
         _logger = logger;
+        
+        _dispatcher.WelcomeReceived += (w) =>
+        {
+            _playerId = w.ClientId;
+            _logger.LogInfo($"Received WelcomeMessage. Assigned client id {_playerId}");
+            _welcomeTcs?.TrySetResult(_playerId);
+        };
+        _dispatcher.GameCreatedReceived += (g) => _createGameTcs?.TrySetResult(g);
+        _dispatcher.ListGamesReceived += (l) => _listGamesTcs?.TrySetResult(l);
+        _dispatcher.GameJoinedReceived += (j) => _joinGameTcs?.TrySetResult(j);
+        _dispatcher.MatchHistoryReceived += (m) => _matchHistoryTcs?.TrySetResult(m);
     }
 
     public async Task RunAsync(string serverUri)
@@ -68,7 +83,7 @@ public class ConsoleClient
                 }
                 else
                 {
-                    _frontend = new GameFrontend(_wsClient, _playerId, response.Color, response.Gameboard, _logger);
+                    _frontend = new GameFrontend(_gameManager, _dispatcher, _playerId, response.Color, response.Gameboard, _logger);
                     await _frontend.EnterGameAsync(response.GameId);
                 }
 
@@ -106,7 +121,7 @@ public class ConsoleClient
                     }
                     else
                     {
-                        _frontend = new GameFrontend(_wsClient, _playerId, res.Color, res.Gameboard, _logger);
+                        _frontend = new GameFrontend(_gameManager, _dispatcher, _playerId, res.Color, res.Gameboard, _logger);
                         await _frontend.EnterGameAsync(res.GameId);
                     }
                 }
