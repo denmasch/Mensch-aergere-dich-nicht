@@ -17,7 +17,10 @@ public class Program
         logger.LogInfo("Starting Client");
         
         var wsClient = new WebSocketClient(logger);
-        var consoleClient = new ConsoleClient(wsClient, logger);
+        var dispatcher = new MessageDispatcher(wsClient, logger);
+        var gameManager = new GameManager(wsClient, dispatcher, logger);
+
+        var consoleClient = new ConsoleClient(wsClient, dispatcher, gameManager, logger);
         
         while (true)
         {
