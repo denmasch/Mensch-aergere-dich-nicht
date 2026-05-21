@@ -266,32 +266,43 @@ namespace MadnClient
         private void ShowMenu()
         {
             Console.Clear();
-            Console.WriteLine($"┌────────────────────────────────────────────────────┐");
-            Console.WriteLine($"│ Spiel {_gameId}         │");
-            Console.WriteLine($"├──────────────┬─────────────────────────────────────┤");
-            Console.WriteLine($"│ Spieler:     │ {$"{_playerCount}/4",-35} │");
-            Console.WriteLine($"│ Admin:       │ {ColorHelper.ColorToString(_adminColor),-35} │");
-            Console.WriteLine($"│ Deine Farbe: │ {ColorHelper.ColorToString(_yourColor),-35} │");
-            Console.WriteLine($"│ Status:      │ {Status(),-35} │");
-            Console.WriteLine($"│ Würfel:      │ {DiceRoll(),-35} │");
-            Console.WriteLine($"├──────────────┴─────────────────────────────────────┤");
-            DrawGameBoard(_currentGameboard);
-            Console.WriteLine($"├────────────────────────────────────────────────────┤");
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"┌────────────────────────────────────────────────────┐");
+            sb.AppendLine($"│ Spiel {_gameId}         │");
+            sb.AppendLine($"├──────────────┬─────────────────────────────────────┤");
+            sb.AppendLine($"│ Spieler:     │ {$"{_playerCount}/4",-35} │");
+            sb.AppendLine($"│ Admin:       │ {ColorHelper.ColorToString(_adminColor),-35} │");
+            sb.AppendLine($"│ Deine Farbe: │ {ColorHelper.ColorToString(_yourColor),-35} │");
+            sb.AppendLine($"│ Status:      │ {Status(),-35} │");
+            sb.AppendLine($"│ Würfel:      │ {DiceRoll(),-35} │");
+            sb.AppendLine($"├──────────────┴─────────────────────────────────────┤");
+
+            // Draw board into its own StringBuilder and append
+            var boardSb = DrawGameBoard(_currentGameboard);
+            sb.Append(boardSb.ToString());
+
+            sb.AppendLine($"├────────────────────────────────────────────────────┤");
+
             if (_gameState == GameState.GameOver)
-            { 
-                Console.WriteLine("│ Spiel vorbei!                                      │");
+            {
+                sb.AppendLine("│ Spiel vorbei!                                      │");
                 if (_winnerColor.HasValue)
                 {
-                    Console.WriteLine($"│ {$"Der Gewinner ist {ColorHelper.ColorToString(_winnerColor.Value)}.",-42}         │");
+                    sb.AppendLine($"│ {$"Der Gewinner ist {ColorHelper.ColorToString(_winnerColor.Value)}.",-42}         │");
                 }
-                Console.WriteLine("└────────────────────────────────────────────────────┘");
-                Console.WriteLine();
-                Console.WriteLine("Drücke 'b' um zum Menü zurück zu kehren.");
+                sb.AppendLine("└────────────────────────────────────────────────────┘");
+                sb.AppendLine();
+                sb.AppendLine("Drücke 'b' um zum Menü zurück zu kehren.");
             }
             else
             {
-                ShowOptions();
+                var optionsSb = ShowOptions();
+                sb.Append(optionsSb.ToString());
             }
+
+            Console.Write(sb.ToString());
+            Console.ResetColor();
         }
 
         private Difficulty ShowCpuDifficultyMenu()
@@ -342,29 +353,31 @@ namespace MadnClient
             }
         }
         
-        private void ShowOptions()
+        private StringBuilder ShowOptions()
         {
-            Console.WriteLine("│ Optionen                                           │");
-            Console.WriteLine("├────────────────────────────────────────────────────┤");
-            Console.WriteLine("│ B) Spiel verlassen                                 │");
+            var sb = new StringBuilder();
+            sb.AppendLine("│ Optionen                                           │");
+            sb.AppendLine("├────────────────────────────────────────────────────┤");
+            sb.AppendLine("│ B) Spiel verlassen                                 │");
             if (_gameState == GameState.WaitingForStart && _yourColor == _adminColor)
             {
-                Console.WriteLine("│ S) Spiel starten                                   │");
+                sb.AppendLine("│ S) Spiel starten                                   │");
                 if (_playerCount < 4)
                 {
-                    Console.WriteLine("│ C) CPU Gegner hinzufügen                           │");
+                    sb.AppendLine("│ C) CPU Gegner hinzufügen                           │");
                 }
             }
             if (_gameState == GameState.RollDice)
             {
-                Console.WriteLine("│ W) Würfeln                                         │");
+                sb.AppendLine("│ W) Würfeln                                         │");
             }
             if (_gameState == GameState.MoveFigure)
             {
-                Console.WriteLine("│ A/D) Figur auswählen                               │");
-                Console.WriteLine("│ Enter) Figur bewegen                               │");
+                sb.AppendLine("│ A/D) Figur auswählen                               │");
+                sb.AppendLine("│ Enter) Figur bewegen                               │");
             }
-            Console.WriteLine("└────────────────────────────────────────────────────┘");
+            sb.AppendLine("└────────────────────────────────────────────────────┘");
+            return sb;
         }
         
         private string DiceRoll()
@@ -381,7 +394,7 @@ namespace MadnClient
              }
         }
         
-        private void DrawGameBoard(GameboardDTO board)
+        private StringBuilder DrawGameBoard(GameboardDTO board)
         {
             var sb = new StringBuilder();
 
@@ -397,8 +410,7 @@ namespace MadnClient
                 sb.AppendLine("                  │");
             }
 
-            Console.Write(sb.ToString());
-            Console.ResetColor();
+            return sb;
         }
 
         private string RenderTileString(int x, int y, GameboardDTO board)
